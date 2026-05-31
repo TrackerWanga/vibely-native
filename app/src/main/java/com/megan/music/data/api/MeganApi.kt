@@ -3,7 +3,7 @@ package com.megan.music.data.api
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-data class Song(
+data class MeganSong(
     val videoId: String?,
     val title: String?,
     val author: String?,
@@ -12,8 +12,8 @@ data class Song(
     val views: Long?
 )
 
-data class SearchResponse(val success: Boolean?, val results: List<Song>?)
-data class TrendingResponse(val success: Boolean?, val results: List<Song>?)
+data class SearchResponse(val success: Boolean?, val results: List<MeganSong>?)
+data class TrendingResponse(val success: Boolean?, val results: List<MeganSong>?)
 
 interface MeganApi {
     @GET("api/search/youtube")

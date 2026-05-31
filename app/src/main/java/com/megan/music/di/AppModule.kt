@@ -1,6 +1,7 @@
 package com.megan.music.di
 
 import com.megan.music.data.api.MeganApi
+import com.megan.music.data.api.MusicDiscoveryApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 object AppModule {
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit = Retrofit.Builder()
+    fun provideMeganRetrofit(): Retrofit = Retrofit.Builder()
         .baseUrl(MeganApi.BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
@@ -22,4 +23,15 @@ object AppModule {
     @Provides
     @Singleton
     fun provideMeganApi(retrofit: Retrofit): MeganApi = retrofit.create(MeganApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideDiscoveryRetrofit(): Retrofit = Retrofit.Builder()
+        .baseUrl(MusicDiscoveryApi.BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideDiscoveryApi(retrofit: Retrofit): MusicDiscoveryApi = retrofit.create(MusicDiscoveryApi::class.java)
 }
