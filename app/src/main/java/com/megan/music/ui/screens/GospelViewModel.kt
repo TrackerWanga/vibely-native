@@ -1,5 +1,6 @@
 package com.megan.music.ui.screens
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.megan.music.data.api.Artist
@@ -28,12 +29,17 @@ class GospelViewModel @Inject constructor(
             _loading.value = true
             try {
                 val response = discoveryApi.getHomepage()
-                // Use all artists from discovery as gospel artists (they have country data)
-                val all = (response.banner ?: emptyList()) + (response.trending ?: emptyList()) + (response.topArtists ?: emptyList())
-                val unique = all.distinctBy { it.name }.take(40)
-                _artists.value = unique
-                _grouped.value = unique.groupBy { it.country ?: "Global" }
-            } catch (e: Exception) { }
+                val all = ((response.banner ?: emptyList()) + (response.trending ?: emptyList()) + (response.topArtists ?: emptyList()))
+                    .distinctBy { it.name }
+                    .take(50)
+                _artists.value = all
+                _grouped.value = all.groupBy { it.country ?: "Global" }
+                Log.d("GospelVM", "Loaded ${all.size} artists in ${_grouped.value.size} countries")
+            } catch (e: Exception) {
+                Log.e("GospelVM", "Error: ${e.message}")
+                _artists.value = emptyList()
+                _grouped.value = emptyMap()
+            }
             _loading.value = false
         }
     }
