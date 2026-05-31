@@ -73,12 +73,12 @@ fun SearchScreen(navController: NavController, viewModel: SearchViewModel = hilt
                     ListItem(
                         leadingContent = {
                             AsyncImage(
-                                model = song.thumbnail ?: "https://i.ytimg.com/vi/${song.videoId}/hqdefault.jpg",
+                                model = song.thumbnail ?: "",
                                 contentDescription = null,
                                 modifier = Modifier.size(56.dp)
                             )
                         },
-                        headlineContent = { Text(song.title.take(60), fontSize = 14.sp, fontWeight = FontWeight.Medium) },
+                        headlineContent = { Text(song.title?.take(60) ?: "", fontSize = 14.sp, fontWeight = FontWeight.Medium) },
                         supportingContent = {
                             Text(
                                 "${song.author ?: "Unknown"} • ${formatViews(song.views ?: 0)} views • ${song.duration ?: ""}",
@@ -86,7 +86,6 @@ fun SearchScreen(navController: NavController, viewModel: SearchViewModel = hilt
                             )
                         },
                         modifier = Modifier.clickable {
-                            viewModel.play(song)
                             navController.navigate("player")
                         }
                     )

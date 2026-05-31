@@ -3,7 +3,7 @@ package com.megan.music.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.megan.music.data.api.MeganApi
-import com.megan.music.data.api.Song
+import com.megan.music.data.api.MeganSong
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,8 +14,8 @@ import javax.inject.Inject
 class SearchViewModel @Inject constructor(
     private val api: MeganApi
 ) : ViewModel() {
-    private val _results = MutableStateFlow<List<Song>>(emptyList())
-    val results: StateFlow<List<Song>> = _results
+    private val _results = MutableStateFlow<List<MeganSong>>(emptyList())
+    val results: StateFlow<List<MeganSong>> = _results
 
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading
@@ -30,6 +30,4 @@ class SearchViewModel @Inject constructor(
             _loading.value = false
         }
     }
-
-    fun play(song: Song) { }
 }
