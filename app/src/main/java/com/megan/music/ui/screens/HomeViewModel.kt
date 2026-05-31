@@ -30,12 +30,16 @@ class HomeViewModel @Inject constructor(
     private fun loadAll() {
         viewModelScope.launch {
             loading.value = true
-            // Timeout after 15 seconds
             withTimeoutOrNull(15000) {
-                try { homepage.value = discoveryApi.getHomepage(); allCountries = homepage.value?.countries ?: emptyList(); loadMoreCountries() }
-                catch (e: Exception) { Log.e("HomeVM", "Discovery: ${e.message}") }
-                try { trending.value = meganApi.trending(MeganApi.API_KEY).results?.filter { it.videoId != null }?.take(20) ?: emptyList() }
-                catch (e: Exception) { Log.e("HomeVM", "Trending: ${e.message}") }
+                try {
+                    homepage.value = discoveryApi.getHomepage()
+                    allCountries = homepage.value?.countries ?: emptyList()
+                    loadMoreCountries()
+                } catch (e: Exception) { Log.e("HomeVM", "Discovery: ${e.message}") }
+                try {
+                    trending.value = meganApi.trending(MeganApi.API_KEY).results
+                        ?.filter { it.videoId != null }?.take(20) ?: emptyList()
+                } catch (e: Exception) { Log.e("HomeVM", "Trending: ${e.message}") }
             }
             loading.value = false
         }
@@ -49,15 +53,35 @@ class HomeViewModel @Inject constructor(
         val batch = allCountries.subList(start, end)
         visibleCountries.value = visibleCountries.value + batch
         currentPage++
+
         viewModelScope.launch {
             for (country in batch) {
                 try {
                     val key = country.code ?: country.name ?: ""
-                    val response = meganApi.search("${country.name} music", MeganApi.API_KEY)
-                    val songs = response.results?.filter { it.videoId != null }?.take(10) ?: emptyList()
-                    val current = countrySongs.value.toMutableMap(); current[key] = songs; countrySongs.value = current
+                    // Use Vercel API to get artists with their topSongs
+                    val response = discoveryApi.getArtistsByCountry(countryCode = country.code ?: "", limit = 5)
+                    val songs = response.artists
+                        ?.flatMap { artist -> artist.topSongs ?: emptyList() }
+                        ?.filter { it.videoId != null }
+                        ?.distinctBy { it.videoId }
+                        ?.take(16)
+                        ?.map { song ->
+                            MeganSong(
+                                videoId = song.videoId,
+                                title = song.title,
+                                author = null,
+                                thumbnail = song.thumbnail,
+                                duration = song.duration,
+                                views = song.views
+                            )
+                        } ?: emptyList()
+                    val current = countrySongs.value.toMutableMap()
+                    current[key] = songs
+                    countrySongs.value = current
                 } catch (e: Exception) {
-                    val current = countrySongs.value.toMutableMap(); current[country.code ?: country.name ?: ""] = emptyList(); countrySongs.value = current
+                    val current = countrySongs.value.toMutableMap()
+                    current[country.code ?: country.name ?: ""] = emptyList()
+                    countrySongs.value = current
                 }
             }
             isLoadingCountries = false
