@@ -1,5 +1,6 @@
 package com.megan.music.ui.screens
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.megan.music.data.api.MeganApi
@@ -33,20 +34,33 @@ class HomeViewModel @Inject constructor(
     private fun loadAll() {
         viewModelScope.launch {
             _loading.value = true
-            // Load both APIs in parallel
-            val trendingDeferred = launch {
+            
+            // Load YouTube trending (always works)
+            launch {
                 try {
                     val response = meganApi.trending(MeganApi.API_KEY)
-                    _trending.value = response.results?.filter { it.videoId != null }?.take(20) ?: emptyList()
-                } catch (e: Exception) { }
+                    _trending.value = response.results
+                        ?.filter { it.videoId != null && it.title != null }
+                        ?.take(20)
+                        ?: emptyList()
+                    Log.d("HomeVM", "Trending loaded: ${_trending.value.size} songs")
+                } catch (e: Exception) {
+                    Log.e("HomeVM", "Trending error: ${e.message}")
+                }
             }
-            val discoveryDeferred = launch {
+            
+            // Load discovery data (may fail, that's ok)
+            launch {
                 try {
-                    _homepage.value = discoveryApi.getHomepage()
-                } catch (e: Exception) { }
+                    val data = discoveryApi.getHomepage()
+                    _homepage.value = data
+                    Log.d("HomeVM", "Discovery loaded: ${data.banner?.size} banners, ${data.countries?.size} countries")
+                } catch (e: Exception) {
+                    Log.e("HomeVM", "Discovery error: ${e.message}")
+                    // Leave homepage as null - UI will show trending only
+                }
             }
-            trendingDeferred.join()
-            discoveryDeferred.join()
+            
             _loading.value = false
         }
     }
