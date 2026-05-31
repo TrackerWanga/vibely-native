@@ -1,9 +1,11 @@
-package com.megan.vibely.ui.screens
+package com.megan.music.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Menu
@@ -18,7 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.megan.vibely.data.api.Song
+import com.megan.music.data.api.Song
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +31,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("🎵 Vibely", fontWeight = FontWeight.Bold) },
+                title = { Text("🎵 Megan Music", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
@@ -41,7 +43,12 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+        ) {
             // Quick actions
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -61,7 +68,13 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             )
 
             if (loading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (trending.isEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    Text("No trending songs found", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                }
             } else {
                 LazyRow(modifier = Modifier.fillMaxWidth()) {
                     items(trending) { song ->
@@ -72,6 +85,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     }
                 }
             }
+
+            Spacer(Modifier.height(32.dp))
         }
     }
 }
@@ -80,25 +95,26 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 fun SongCard(song: Song, onClick: () -> Unit) {
     Card(
         modifier = Modifier.width(200.dp).padding(8.dp).clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column {
             AsyncImage(
-                model = song.thumbnail ?: "",
+                model = song.thumbnail ?: "https://i.ytimg.com/vi/${song.videoId}/hqdefault.jpg",
                 contentDescription = song.title,
                 modifier = Modifier.fillMaxWidth().height(120.dp),
                 contentScale = ContentScale.Crop
             )
             Text(
-                song.title.take(40),
+                song.title.take(50),
                 modifier = Modifier.padding(8.dp),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                maxLines = 2
+                maxLines = 2,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 song.author ?: "Unknown",
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                modifier = Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -111,9 +127,14 @@ fun ActionChip(label: String, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.primaryContainer,
         modifier = Modifier.padding(4.dp)
     ) {
-        Text(label, modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp), fontSize = 13.sp)
+        Text(
+            label,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }

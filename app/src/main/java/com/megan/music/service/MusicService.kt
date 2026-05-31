@@ -1,4 +1,4 @@
-package com.megan.vibely.service
+package com.megan.music.service
 
 import android.app.PendingIntent
 import android.content.Intent
@@ -8,7 +8,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.megan.vibely.MainActivity
+import com.megan.music.MainActivity
 
 class MusicService : MediaSessionService() {
     private var player: ExoPlayer? = null

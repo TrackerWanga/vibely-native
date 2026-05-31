@@ -10,10 +10,10 @@
 
     <application
         android:allowBackup="true"
-        android:label="Vibely"
+        android:label="Megan Music"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Vibely"
-        android:name=".VibelyApp">
+        android:theme="@style/Theme.Megan Music"
+        android:name=".Megan MusicApp">
 
         <activity
             android:name=".MainActivity"

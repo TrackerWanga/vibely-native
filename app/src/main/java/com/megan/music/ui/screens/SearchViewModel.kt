@@ -1,9 +1,9 @@
-package com.megan.vibely.ui.screens
+package com.megan.music.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.megan.vibely.data.api.MeganApi
-import com.megan.vibely.data.api.Song
+import com.megan.music.data.api.MeganApi
+import com.megan.music.data.api.Song
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

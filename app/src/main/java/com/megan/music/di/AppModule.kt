@@ -1,6 +1,6 @@
-package com.megan.vibely.di
+package com.megan.music.di
 
-import com.megan.vibely.data.api.MeganApi
+import com.megan.music.data.api.MeganApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

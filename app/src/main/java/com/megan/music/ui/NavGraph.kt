@@ -1,13 +1,13 @@
-package com.megan.vibely.ui
+package com.megan.music.ui
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.megan.vibely.ui.screens.HomeScreen
-import com.megan.vibely.ui.screens.PlayerScreen
-import com.megan.vibely.ui.screens.SearchScreen
-import com.megan.vibely.ui.screens.OfflineScreen
+import com.megan.music.ui.screens.HomeScreen
+import com.megan.music.ui.screens.PlayerScreen
+import com.megan.music.ui.screens.SearchScreen
+import com.megan.music.ui.screens.OfflineScreen
 
 @Composable
 fun NavGraph() {

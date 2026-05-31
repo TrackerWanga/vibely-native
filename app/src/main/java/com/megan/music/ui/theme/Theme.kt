@@ -1,4 +1,4 @@
-package com.megan.vibely.ui.theme
+package com.megan.music.ui.theme
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable

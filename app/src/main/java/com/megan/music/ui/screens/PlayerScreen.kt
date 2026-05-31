@@ -1,4 +1,4 @@
-package com.megan.vibely.ui.screens
+package com.megan.music.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
