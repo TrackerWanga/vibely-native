@@ -12,8 +12,8 @@
         android:allowBackup="true"
         android:label="Megan Music"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Megan Music"
-        android:name=".Megan MusicApp">
+        android:theme="@style/Theme.MeganMusic"
+        android:name=".MeganMusicApp">
 
         <activity
             android:name=".MainActivity"

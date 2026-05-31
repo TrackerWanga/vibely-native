@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Megan Music" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.MeganMusic" parent="android:Theme.Material.NoActionBar">
         <item name="android:statusBarColor">#06060e</item>
         <item name="android:navigationBarColor">#06060e</item>
     </style>
