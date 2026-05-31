@@ -39,9 +39,9 @@ fun PlayerScreen(navController: NavController) {
 
             Spacer(Modifier.height(48.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                IconButton(onClick = { }) { Icon(Icons.Default.SkipPrevious, "Previous", modifier = Modifier.size(48.dp)) }
-                IconButton(onClick = { }) { Icon(Icons.Default.PlayArrow, "Play", modifier = Modifier.size(64.dp)) }
-                IconButton(onClick = { }) { Icon(Icons.Default.SkipNext, "Next", modifier = Modifier.size(48.dp)) }
+                IconButton(onClick = { }) { Icon(Icons.Filled.SkipPrevious, "Previous", modifier = Modifier.size(48.dp)) }
+                IconButton(onClick = { }) { Icon(Icons.Filled.PlayArrow, "Play", modifier = Modifier.size(64.dp)) }
+                IconButton(onClick = { }) { Icon(Icons.Filled.SkipNext, "Next", modifier = Modifier.size(48.dp)) }
             }
         }
     }
