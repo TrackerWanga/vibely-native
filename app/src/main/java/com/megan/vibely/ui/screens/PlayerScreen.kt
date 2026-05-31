@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,10 +38,10 @@ fun PlayerScreen(navController: NavController) {
             Text("Player coming soon", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
 
             Spacer(Modifier.height(48.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                IconButton(onClick = { }) { Icon(Icons.Filled.SkipPrevious, "Previous", modifier = Modifier.size(48.dp)) }
+            Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+                IconButton(onClick = { }) { Icon(Icons.Filled.FastRewind, "Previous", modifier = Modifier.size(48.dp)) }
                 IconButton(onClick = { }) { Icon(Icons.Filled.PlayArrow, "Play", modifier = Modifier.size(64.dp)) }
-                IconButton(onClick = { }) { Icon(Icons.Filled.SkipNext, "Next", modifier = Modifier.size(48.dp)) }
+                IconButton(onClick = { }) { Icon(Icons.Filled.FastForward, "Next", modifier = Modifier.size(48.dp)) }
             }
         }
     }
