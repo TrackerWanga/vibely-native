@@ -3,10 +3,10 @@ package com.megan.music.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.PlayArrow
@@ -36,6 +36,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
     val trending by viewModel.trending.collectAsState()
     val homepage by viewModel.homepage.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val visibleCountries by viewModel.visibleCountries.collectAsState()
+    val countrySongs by viewModel.countrySongs.collectAsState()
 
     var bannerIndex by remember { mutableStateOf(0) }
     val banners = homepage?.banner ?: emptyList()
@@ -44,6 +46,18 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
         if (banners.size > 1) {
             while (true) { delay(5000); bannerIndex = (bannerIndex + 1) % banners.size }
         }
+    }
+
+    // Infinite scroll
+    val listState = rememberLazyListState()
+    val shouldLoadMore = remember {
+        derivedStateOf {
+            val lastItem = listState.layoutInfo.visibleItemsInfo.lastOrNull() ?: return@derivedStateOf false
+            lastItem.index >= listState.layoutInfo.totalItemsCount - 3
+        }
+    }
+    LaunchedEffect(shouldLoadMore.value) {
+        if (shouldLoadMore.value) viewModel.loadMoreCountries()
     }
 
     Scaffold(
@@ -63,70 +77,108 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = Color(0xFF7C3AED))
-                    Spacer(Modifier.height(16.dp))
                     Text("Loading...", color = Color(0xFF94A3B8))
                 }
             }
         } else {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
-            ) {
+            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), state = listState) {
                 // Banner
                 if (banners.isNotEmpty()) {
-                    val artist = banners[bannerIndex]
-                    BannerCard(artist)
-                    if (banners.size > 1) {
-                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.Center) {
-                            banners.forEachIndexed { i, _ ->
-                                Box(modifier = Modifier.padding(4.dp).size(if (i == bannerIndex) 10.dp else 8.dp).clip(MaterialTheme.shapes.small).background(if (i == bannerIndex) Color(0xFFA78BFA) else Color(0xFF475569)))
+                    item {
+                        val artist = banners[bannerIndex]
+                        BannerCard(artist)
+                        if (banners.size > 1) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.Center) {
+                                banners.forEachIndexed { i, _ ->
+                                    Box(modifier = Modifier.padding(4.dp).size(if (i == bannerIndex) 10.dp else 8.dp).clip(MaterialTheme.shapes.small).background(if (i == bannerIndex) Color(0xFFA78BFA) else Color(0xFF475569)))
+                                }
                             }
                         }
                     }
                 }
 
                 // Quick actions
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    QuickChip("🙏 Gospel") { }
-                    QuickChip("🌟 Beloved") { }
-                    QuickChip("💾 Offline") { navController.navigate("offline") }
+                item {
+                    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        QuickChip("🙏 Gospel") { }
+                        QuickChip("🌟 Beloved") { }
+                        QuickChip("💾 Offline") { navController.navigate("offline") }
+                    }
                 }
 
                 // Discover
                 if (trending.isNotEmpty()) {
-                    SectionTitle("🔥 Discover", "Trending now")
-                    LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(trending) { song -> YouTubeCard(song) { navController.navigate("player") } }
+                    item { SectionTitle("🔥 Discover", "Trending now") }
+                    item {
+                        LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            items(trending) { song -> YouTubeCard(song) { navController.navigate("player") } }
+                        }
                     }
                 }
 
                 // Featured Artists
                 val discoveryArtists = homepage?.trending
                 if (discoveryArtists != null && discoveryArtists.isNotEmpty()) {
-                    SectionTitle("🎤 Featured Artists", "${discoveryArtists.size} artists")
-                    LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(discoveryArtists.take(20)) { artist -> ArtistCard(artist) }
+                    item { SectionTitle("🎤 Featured Artists") }
+                    item {
+                        LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            items(discoveryArtists.take(20)) { artist -> ArtistCard(artist) }
+                        }
                     }
                 }
 
                 // Top Artists
                 val topArtists = homepage?.topArtists
                 if (topArtists != null && topArtists.isNotEmpty()) {
-                    SectionTitle("🏆 Top Artists", "Global rankings")
-                    LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(topArtists.take(10)) { artist -> TopArtistCard(artist, topArtists.indexOf(artist) + 1) }
+                    item { SectionTitle("🏆 Top Artists") }
+                    item {
+                        LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
+                            items(topArtists.take(10)) { artist -> TopArtistCard(artist, topArtists.indexOf(artist) + 1) }
+                        }
                     }
                 }
 
-                // Countries
-                val countries = homepage?.countries
-                if (countries != null && countries.isNotEmpty()) {
-                    SectionTitle("🌍 Countries", "${countries.size} countries")
-                    LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(countries.take(20)) { country -> CountryCard(country) }
-                    }
+                // Countries with songs - vertical sections
+                items(visibleCountries) { country ->
+                    CountrySection(
+                        country = country,
+                        songs = countrySongs[country.code ?: country.name ?: ""] ?: emptyList(),
+                        onSongClick = { navController.navigate("player") }
+                    )
                 }
 
-                Spacer(Modifier.height(32.dp))
+                // Loading more indicator
+                item {
+                    if (visibleCountries.size < (homepage?.countries?.size ?: 0)) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFF7C3AED), modifier = Modifier.size(24.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CountrySection(country: Country, songs: List<MeganSong>, onSongClick: () -> Unit) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(country.flag ?: "🌍", fontSize = 28.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(country.name ?: "", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF1F5F9))
+            Spacer(Modifier.weight(1f))
+            Text("${country.totalArtists ?: 0} artists", fontSize = 12.sp, color = Color(0xFF64748B))
+        }
+        if (songs.isNotEmpty()) {
+            LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
+                items(songs.take(10)) { song ->
+                    YouTubeCard(song, onClick = onSongClick)
+                }
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxWidth().height(120.dp).padding(8.dp).clip(MaterialTheme.shapes.medium).background(Color(0xFF111128)), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFF7C3AED), modifier = Modifier.size(20.dp))
             }
         }
     }
@@ -134,7 +186,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 
 @Composable
 fun SectionTitle(title: String, subtitle: String? = null) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFF1F5F9))
         if (subtitle != null) Text(subtitle, fontSize = 12.sp, color = Color(0xFF64748B))
     }
@@ -148,14 +200,13 @@ fun BannerCard(artist: DiscoveryArtist) {
         Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
             Text("${artist.flag ?: ""} ${artist.country ?: ""}", color = Color(0xFFA78BFA), fontSize = 12.sp)
             Text(artist.name ?: "", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-            Text("${artist.channel?.subscribers?.let { formatCount(it) } ?: ""} subscribers", color = Color(0xFF94A3B8), fontSize = 13.sp)
             if (artist.topSongs?.isNotEmpty() == true) {
                 Spacer(Modifier.height(8.dp))
                 Surface(onClick = { }, color = Color(0xFF7C3AED), shape = MaterialTheme.shapes.medium) {
                     Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.PlayArrow, "Play", tint = Color.White, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(4.dp))
-                        Text("Play Audio", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        Text("Play Audio", color = Color.White, fontSize = 13.sp)
                     }
                 }
             }
@@ -165,7 +216,7 @@ fun BannerCard(artist: DiscoveryArtist) {
 
 @Composable
 fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
-    Card(modifier = Modifier.width(180.dp).padding(8.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
+    Card(modifier = Modifier.width(180.dp).padding(8.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(110.dp).clip(MaterialTheme.shapes.medium)) {
                 AsyncImage(model = song.thumbnail ?: "", contentDescription = song.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -175,9 +226,8 @@ fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
                     }
                 }
             }
-            Column(modifier = Modifier.padding(8.dp).height(70.dp)) {
+            Column(modifier = Modifier.padding(8.dp)) {
                 Text(song.title?.take(45) ?: "", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFFF1F5F9), maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 16.sp)
-                Spacer(Modifier.height(4.dp))
                 Text(song.author ?: "Unknown", fontSize = 11.sp, color = Color(0xFFA78BFA), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("${formatCount(song.views ?: 0)} views", fontSize = 10.sp, color = Color(0xFF64748B))
             }
@@ -187,15 +237,14 @@ fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
 
 @Composable
 fun ArtistCard(artist: DiscoveryArtist) {
-    Card(modifier = Modifier.width(150.dp).height(170.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
-        Column(modifier = Modifier.padding(12.dp).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    Card(modifier = Modifier.width(150.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(modifier = Modifier.size(72.dp).clip(MaterialTheme.shapes.medium).background(Color(0xFF1A1A2E)), contentAlignment = Alignment.Center) {
                 AsyncImage(model = artist.channel?.image ?: "", contentDescription = artist.name, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
             Spacer(Modifier.height(8.dp))
             Text(artist.name ?: "", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFFF1F5F9), maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("${artist.flag ?: ""} ${artist.country ?: ""}", fontSize = 11.sp, color = Color(0xFF64748B), maxLines = 1)
-            Text("${artist.songCount ?: 0} songs", fontSize = 10.sp, color = Color(0xFFA78BFA))
         }
     }
 }
@@ -203,31 +252,18 @@ fun ArtistCard(artist: DiscoveryArtist) {
 @Composable
 fun TopArtistCard(artist: DiscoveryArtist, rank: Int) {
     val rankColor = when (rank) { 1 -> Color(0xFFF59E0B); 2 -> Color(0xFF94A3B8); 3 -> Color(0xFFCD7F32); else -> Color(0xFF475569) }
-    Card(modifier = Modifier.width(180.dp).height(70.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
-        Row(modifier = Modifier.padding(12.dp).fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+    Card(modifier = Modifier.width(180.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("#$rank", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = rankColor)
             Spacer(Modifier.width(10.dp))
             Box(modifier = Modifier.size(44.dp).clip(MaterialTheme.shapes.small).background(Color(0xFF1A1A2E)), contentAlignment = Alignment.Center) {
                 AsyncImage(model = artist.channel?.image ?: "", contentDescription = artist.name, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
             Spacer(Modifier.width(8.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Column {
                 Text(artist.name ?: "", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFFF1F5F9), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("${artist.flag ?: ""} ${artist.country ?: ""}", fontSize = 10.sp, color = Color(0xFF64748B))
-                Text("${artist.songCount ?: 0} songs", fontSize = 9.sp, color = Color(0xFFA78BFA))
             }
-        }
-    }
-}
-
-@Composable
-fun CountryCard(country: Country) {
-    Card(modifier = Modifier.width(140.dp).height(100.dp).padding(8.dp).clickable { }, colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
-        Column(modifier = Modifier.padding(12.dp).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text(country.flag ?: "🌍", fontSize = 32.sp)
-            Spacer(Modifier.height(4.dp))
-            Text(country.name ?: "", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFFF1F5F9), maxLines = 1)
-            Text("${country.totalArtists ?: 0} artists", fontSize = 11.sp, color = Color(0xFFA78BFA))
         }
     }
 }
