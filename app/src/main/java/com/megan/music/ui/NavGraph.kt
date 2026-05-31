@@ -1,13 +1,12 @@
 package com.megan.music.ui
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.megan.music.ui.screens.HomeScreen
-import com.megan.music.ui.screens.PlayerScreen
-import com.megan.music.ui.screens.SearchScreen
-import com.megan.music.ui.screens.OfflineScreen
+import androidx.navigation.navArgument
+import com.megan.music.ui.screens.*
 
 @Composable
 fun NavGraph() {
@@ -17,5 +16,14 @@ fun NavGraph() {
         composable("search") { SearchScreen(navController) }
         composable("player") { PlayerScreen(navController) }
         composable("offline") { OfflineScreen(navController) }
+        composable("gospel") { GospelScreen(navController) }
+        composable("beloved") { BelovedScreen(navController) }
+        composable(
+            "artist/{name}",
+            arguments = listOf(navArgument("name") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name") ?: ""
+            ArtistScreen(artistName = name, navController = navController)
+        }
     }
 }

@@ -1,3 +1,4 @@
+import com.megan.music.util.formatCount
 package com.megan.music.ui.screens
 
 import androidx.compose.foundation.background
@@ -100,8 +101,8 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 // Quick actions
                 item {
                     Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        QuickChip("🙏 Gospel") { }
-                        QuickChip("🌟 Beloved") { }
+                        QuickChip("🙏 Gospel") { navController.navigate("gospel") }
+                        QuickChip("🌟 Beloved") { navController.navigate("beloved") }
                         QuickChip("💾 Offline") { navController.navigate("offline") }
                     }
                 }
@@ -122,7 +123,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     item { SectionTitle("🎤 Featured Artists") }
                     item {
                         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-                            items(discoveryArtists.take(20)) { artist -> ArtistCard(artist) }
+                            items(discoveryArtists.take(20)) { artist -> ArtistCard(artist) { navController.navigate("artist/${artist.name}") } }
                         }
                     }
                 }
@@ -133,7 +134,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     item { SectionTitle("🏆 Top Artists") }
                     item {
                         LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) {
-                            items(topArtists.take(10)) { artist -> TopArtistCard(artist, topArtists.indexOf(artist) + 1) }
+                            items(topArtists.take(10)) { artist -> TopArtistCard(artist, topArtists.indexOf(artist) + 1) { navController.navigate("artist/${artist.name}") } }
                         }
                     }
                 }
@@ -216,7 +217,7 @@ fun BannerCard(artist: DiscoveryArtist) {
 
 @Composable
 fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
-    Card(modifier = Modifier.width(180.dp).padding(8.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+    Card(modifier = Modifier.width(180.dp).padding(8.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {    .clickable(onClick = onClick)
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(110.dp).clip(MaterialTheme.shapes.medium)) {
                 AsyncImage(model = song.thumbnail ?: "", contentDescription = song.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -236,8 +237,8 @@ fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
 }
 
 @Composable
-fun ArtistCard(artist: DiscoveryArtist) {
-    Card(modifier = Modifier.width(150.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+fun ArtistCard(artist: DiscoveryArtist, onClick: () -> Unit = {}) {
+    Card(modifier = Modifier.width(150.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {    .clickable(onClick = onClick)
         Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(modifier = Modifier.size(72.dp).clip(MaterialTheme.shapes.medium).background(Color(0xFF1A1A2E)), contentAlignment = Alignment.Center) {
                 AsyncImage(model = artist.channel?.image ?: "", contentDescription = artist.name, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -250,9 +251,9 @@ fun ArtistCard(artist: DiscoveryArtist) {
 }
 
 @Composable
-fun TopArtistCard(artist: DiscoveryArtist, rank: Int) {
+fun TopArtistCard(artist: DiscoveryArtist, rank: Int, onClick: () -> Unit = {}) {
     val rankColor = when (rank) { 1 -> Color(0xFFF59E0B); 2 -> Color(0xFF94A3B8); 3 -> Color(0xFFCD7F32); else -> Color(0xFF475569) }
-    Card(modifier = Modifier.width(180.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+    Card(modifier = Modifier.width(180.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {    .clickable(onClick = onClick)
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("#$rank", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = rankColor)
             Spacer(Modifier.width(10.dp))
@@ -275,8 +276,3 @@ fun QuickChip(label: String, onClick: () -> Unit) {
     }
 }
 
-fun formatCount(count: Long): String = when {
-    count >= 1_000_000 -> "${count / 1_000_000}M"
-    count >= 1_000 -> "${count / 1_000}K"
-    else -> count.toString()
-}
