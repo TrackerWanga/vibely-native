@@ -1,10 +1,37 @@
 package com.megan.music.data.api
 
+import com.google.gson.annotations.SerializedName
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-// ─── Music Discovery API Models ────────────────────────
+// ─── Response wrappers ─────────────────────────────────
+data class HomepageResponse(
+    val success: Boolean?,
+    val banner: List<Artist>?,
+    val trending: List<Artist>?,
+    val topArtists: List<Artist>?,
+    val countries: List<Country>?,
+    val stats: Stats?
+)
+
+data class CountryListResponse(
+    val success: Boolean?,
+    val countries: List<Country>?
+)
+
+data class ArtistDetailResponse(
+    val success: Boolean?,
+    val artist: Artist?,
+    val similar: List<Artist>?
+)
+
+data class SearchResultResponse(
+    val success: Boolean?,
+    val local: List<Artist>?
+)
+
+// ─── Models ────────────────────────────────────────────
 data class Artist(
     val name: String?,
     val country: String?,
@@ -42,43 +69,27 @@ data class Country(
     val gospelArtists: Int?
 )
 
-data class HomepageData(
-    val banner: List<Artist>?,
-    val trending: List<Artist>?,
-    val topArtists: List<Artist>?,
-    val countries: List<Country>?,
-    val stats: Stats?
-)
-
 data class Stats(
     val artists: Int?,
     val songs: Int?,
     val countries: Int?
 )
 
-data class ArtistDetail(
-    val artist: Artist?,
-    val similar: List<Artist>?
-)
-
 // ─── API Interface ────────────────────────────────────
 interface MusicDiscoveryApi {
     @GET("api/homepage")
-    suspend fun getHomepage(): HomepageData
+    suspend fun getHomepage(): HomepageResponse
 
     @GET("api/countries")
-    suspend fun getCountries(): CountryList
+    suspend fun getCountries(): CountryListResponse
 
     @GET("api/artist/{name}")
-    suspend fun getArtist(@Path("name") name: String): ArtistDetail
+    suspend fun getArtist(@Path("name") name: String): ArtistDetailResponse
 
     @GET("api/search")
-    suspend fun search(@Query("q") query: String): SearchResult
+    suspend fun search(@Query("q") query: String): SearchResultResponse
 
     companion object {
         const val BASE_URL = "https://music-discovery-platform.vercel.app/"
     }
 }
-
-data class CountryList(val countries: List<Country>?)
-data class SearchResult(val local: List<Artist>?)
