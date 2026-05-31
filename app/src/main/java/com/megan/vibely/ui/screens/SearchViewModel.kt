@@ -1,0 +1,35 @@
+package com.megan.vibely.ui.screens
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.megan.vibely.data.api.MeganApi
+import com.megan.vibely.data.api.Song
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class SearchViewModel @Inject constructor(
+    private val api: MeganApi
+) : ViewModel() {
+    private val _results = MutableStateFlow<List<Song>>(emptyList())
+    val results: StateFlow<List<Song>> = _results
+
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
+
+    fun search(query: String) {
+        viewModelScope.launch {
+            _loading.value = true
+            try {
+                val response = api.search(query, MeganApi.API_KEY)
+                _results.value = response.results?.take(20) ?: emptyList()
+            } catch (e: Exception) { }
+            _loading.value = false
+        }
+    }
+
+    fun play(song: Song) { }
+}
