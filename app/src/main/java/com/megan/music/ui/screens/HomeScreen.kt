@@ -27,6 +27,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.megan.music.data.api.MeganSong
 import com.megan.music.data.api.Artist as DiscoveryArtist
+import com.megan.music.data.api.Country
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,10 +42,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
 
     LaunchedEffect(banners.size) {
         if (banners.size > 1) {
-            while (true) {
-                delay(5000)
-                bannerIndex = (bannerIndex + 1) % banners.size
-            }
+            while (true) { delay(5000); bannerIndex = (bannerIndex + 1) % banners.size }
         }
     }
 
@@ -71,8 +69,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
             }
         } else {
             Column(
-                modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
             ) {
                 // Banner
                 if (banners.isNotEmpty()) {
@@ -81,33 +78,24 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                     if (banners.size > 1) {
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.Center) {
                             banners.forEachIndexed { i, _ ->
-                                Box(
-                                    modifier = Modifier.padding(4.dp).size(if (i == bannerIndex) 10.dp else 8.dp)
-                                        .clip(MaterialTheme.shapes.small)
-                                        .background(if (i == bannerIndex) Color(0xFFA78BFA) else Color(0xFF475569))
-                                )
+                                Box(modifier = Modifier.padding(4.dp).size(if (i == bannerIndex) 10.dp else 8.dp).clip(MaterialTheme.shapes.small).background(if (i == bannerIndex) Color(0xFFA78BFA) else Color(0xFF475569)))
                             }
                         }
                     }
                 }
 
                 // Quick actions
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                     QuickChip("🙏 Gospel") { }
                     QuickChip("🌟 Beloved") { }
                     QuickChip("💾 Offline") { navController.navigate("offline") }
                 }
 
-                // Discover - YouTube Trending
+                // Discover
                 if (trending.isNotEmpty()) {
                     SectionTitle("🔥 Discover", "Trending now")
                     LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(trending) { song ->
-                            YouTubeCard(song) { navController.navigate("player") }
-                        }
+                        items(trending) { song -> YouTubeCard(song) { navController.navigate("player") } }
                     }
                 }
 
@@ -116,9 +104,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 if (discoveryArtists != null && discoveryArtists.isNotEmpty()) {
                     SectionTitle("🎤 Featured Artists", "${discoveryArtists.size} artists")
                     LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(discoveryArtists.take(20)) { artist ->
-                            ArtistCard(artist)
-                        }
+                        items(discoveryArtists.take(20)) { artist -> ArtistCard(artist) }
                     }
                 }
 
@@ -127,9 +113,16 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 if (topArtists != null && topArtists.isNotEmpty()) {
                     SectionTitle("🏆 Top Artists", "Global rankings")
                     LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
-                        items(topArtists.take(10)) { artist ->
-                            TopArtistCard(artist, topArtists.indexOf(artist) + 1)
-                        }
+                        items(topArtists.take(10)) { artist -> TopArtistCard(artist, topArtists.indexOf(artist) + 1) }
+                    }
+                }
+
+                // Countries
+                val countries = homepage?.countries
+                if (countries != null && countries.isNotEmpty()) {
+                    SectionTitle("🌍 Countries", "${countries.size} countries")
+                    LazyRow(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        items(countries.take(20)) { country -> CountryCard(country) }
                     }
                 }
 
@@ -172,11 +165,7 @@ fun BannerCard(artist: DiscoveryArtist) {
 
 @Composable
 fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.width(180.dp).padding(8.dp).clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)),
-        shape = MaterialTheme.shapes.medium
-    ) {
+    Card(modifier = Modifier.width(180.dp).padding(8.dp).clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(110.dp).clip(MaterialTheme.shapes.medium)) {
                 AsyncImage(model = song.thumbnail ?: "", contentDescription = song.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -186,7 +175,7 @@ fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
                     }
                 }
             }
-            Column(modifier = Modifier.padding(8.dp)) {
+            Column(modifier = Modifier.padding(8.dp).height(70.dp)) {
                 Text(song.title?.take(45) ?: "", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFFF1F5F9), maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 16.sp)
                 Spacer(Modifier.height(4.dp))
                 Text(song.author ?: "Unknown", fontSize = 11.sp, color = Color(0xFFA78BFA), maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -198,8 +187,8 @@ fun YouTubeCard(song: MeganSong, onClick: () -> Unit) {
 
 @Composable
 fun ArtistCard(artist: DiscoveryArtist) {
-    Card(modifier = Modifier.width(150.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
-        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Card(modifier = Modifier.width(150.dp).height(170.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
+        Column(modifier = Modifier.padding(12.dp).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Box(modifier = Modifier.size(72.dp).clip(MaterialTheme.shapes.medium).background(Color(0xFF1A1A2E)), contentAlignment = Alignment.Center) {
                 AsyncImage(model = artist.channel?.image ?: "", contentDescription = artist.name, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
@@ -214,8 +203,8 @@ fun ArtistCard(artist: DiscoveryArtist) {
 @Composable
 fun TopArtistCard(artist: DiscoveryArtist, rank: Int) {
     val rankColor = when (rank) { 1 -> Color(0xFFF59E0B); 2 -> Color(0xFF94A3B8); 3 -> Color(0xFFCD7F32); else -> Color(0xFF475569) }
-    Card(modifier = Modifier.width(170.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Card(modifier = Modifier.width(180.dp).height(70.dp).padding(8.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
+        Row(modifier = Modifier.padding(12.dp).fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             Text("#$rank", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = rankColor)
             Spacer(Modifier.width(10.dp))
             Box(modifier = Modifier.size(44.dp).clip(MaterialTheme.shapes.small).background(Color(0xFF1A1A2E)), contentAlignment = Alignment.Center) {
@@ -227,6 +216,18 @@ fun TopArtistCard(artist: DiscoveryArtist, rank: Int) {
                 Text("${artist.flag ?: ""} ${artist.country ?: ""}", fontSize = 10.sp, color = Color(0xFF64748B))
                 Text("${artist.songCount ?: 0} songs", fontSize = 9.sp, color = Color(0xFFA78BFA))
             }
+        }
+    }
+}
+
+@Composable
+fun CountryCard(country: Country) {
+    Card(modifier = Modifier.width(140.dp).height(100.dp).padding(8.dp).clickable { }, colors = CardDefaults.cardColors(containerColor = Color(0xFF111128)), shape = MaterialTheme.shapes.medium) {
+        Column(modifier = Modifier.padding(12.dp).fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text(country.flag ?: "🌍", fontSize = 32.sp)
+            Spacer(Modifier.height(4.dp))
+            Text(country.name ?: "", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFFF1F5F9), maxLines = 1)
+            Text("${country.totalArtists ?: 0} artists", fontSize = 11.sp, color = Color(0xFFA78BFA))
         }
     }
 }
