@@ -1,11 +1,9 @@
 package com.megan.music.data.api
 
-import com.google.gson.annotations.SerializedName
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-// ─── Response wrappers ─────────────────────────────────
 data class HomepageResponse(
     val success: Boolean?,
     val banner: List<Artist>?,
@@ -15,23 +13,11 @@ data class HomepageResponse(
     val stats: Stats?
 )
 
-data class CountryListResponse(
-    val success: Boolean?,
-    val countries: List<Country>?
-)
+data class CountryListResponse(val success: Boolean?, val countries: List<Country>?)
+data class ArtistDetailResponse(val success: Boolean?, val artist: Artist?, val similar: List<Artist>?)
+data class ArtistsResponse(val success: Boolean?, val artists: List<Artist>?)
+data class SearchResultResponse(val success: Boolean?, val local: List<Artist>?)
 
-data class ArtistDetailResponse(
-    val success: Boolean?,
-    val artist: Artist?,
-    val similar: List<Artist>?
-)
-
-data class SearchResultResponse(
-    val success: Boolean?,
-    val local: List<Artist>?
-)
-
-// ─── Models ────────────────────────────────────────────
 data class Artist(
     val name: String?,
     val country: String?,
@@ -43,39 +29,11 @@ data class Artist(
     val topSongs: List<Song>?
 )
 
-data class Channel(
-    val id: String?,
-    val name: String?,
-    val image: String?,
-    val subscribers: Long?,
-    val verified: Boolean?
-)
+data class Channel(val id: String?, val name: String?, val image: String?, val subscribers: Long?, val verified: Boolean?)
+data class Song(val videoId: String?, val title: String?, val views: Long?, val duration: String?, val thumbnail: String?)
+data class Country(val code: String?, val name: String?, val flag: String?, val continent: String?, val totalArtists: Int?, val secularArtists: Int?, val gospelArtists: Int?)
+data class Stats(val artists: Int?, val songs: Int?, val countries: Int?)
 
-data class Song(
-    val videoId: String?,
-    val title: String?,
-    val views: Long?,
-    val duration: String?,
-    val thumbnail: String?
-)
-
-data class Country(
-    val code: String?,
-    val name: String?,
-    val flag: String?,
-    val continent: String?,
-    val totalArtists: Int?,
-    val secularArtists: Int?,
-    val gospelArtists: Int?
-)
-
-data class Stats(
-    val artists: Int?,
-    val songs: Int?,
-    val countries: Int?
-)
-
-// ─── API Interface ────────────────────────────────────
 interface MusicDiscoveryApi {
     @GET("api/homepage")
     suspend fun getHomepage(): HomepageResponse
@@ -85,6 +43,9 @@ interface MusicDiscoveryApi {
 
     @GET("api/artist/{name}")
     suspend fun getArtist(@Path("name") name: String): ArtistDetailResponse
+
+    @GET("api/artists")
+    suspend fun getArtistsByCountry(@Query("country") countryCode: String, @Query("limit") limit: Int = 5): ArtistsResponse
 
     @GET("api/search")
     suspend fun search(@Query("q") query: String): SearchResultResponse

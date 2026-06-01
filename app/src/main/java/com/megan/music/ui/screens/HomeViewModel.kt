@@ -50,22 +50,21 @@ class HomeViewModel @Inject constructor(
         isLoadingCountries = true
         val start = currentPage * perPage
         val end = minOf(start + perPage, allCountries.size)
-        val batch = allCountries.subList(start, end)
+        val batch: List<Country> = allCountries.subList(start, end)
         visibleCountries.value = visibleCountries.value + batch
         currentPage++
 
         viewModelScope.launch {
-            for (country in batch) {
+            for (country: Country in batch) {
                 try {
-                    val key = country.code ?: country.name ?: ""
-                    // Use Vercel API to get artists with their topSongs
-                    val response = discoveryApi.getArtistsByCountry(countryCode = country.code ?: "", limit = 5)
-                    val songs = response.artists
-                        ?.flatMap { artist -> artist.topSongs ?: emptyList() }
-                        ?.filter { it.videoId != null }
-                        ?.distinctBy { it.videoId }
+                    val key: String = country.code ?: country.name ?: ""
+                    val response: ArtistsResponse = discoveryApi.getArtistsByCountry(countryCode = country.code ?: "", limit = 5)
+                    val songs: List<MeganSong> = response.artists
+                        ?.flatMap { artist: Artist -> artist.topSongs ?: emptyList() }
+                        ?.filter { song: Song -> song.videoId != null }
+                        ?.distinctBy { song: Song -> song.videoId }
                         ?.take(16)
-                        ?.map { song ->
+                        ?.map { song: Song ->
                             MeganSong(
                                 videoId = song.videoId,
                                 title = song.title,
@@ -75,11 +74,11 @@ class HomeViewModel @Inject constructor(
                                 views = song.views
                             )
                         } ?: emptyList()
-                    val current = countrySongs.value.toMutableMap()
+                    val current: MutableMap<String, List<MeganSong>> = countrySongs.value.toMutableMap()
                     current[key] = songs
                     countrySongs.value = current
                 } catch (e: Exception) {
-                    val current = countrySongs.value.toMutableMap()
+                    val current: MutableMap<String, List<MeganSong>> = countrySongs.value.toMutableMap()
                     current[country.code ?: country.name ?: ""] = emptyList()
                     countrySongs.value = current
                 }
