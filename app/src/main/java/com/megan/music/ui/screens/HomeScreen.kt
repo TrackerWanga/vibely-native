@@ -129,13 +129,13 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 val artists = homepage?.trending
                 if (artists != null && artists.isNotEmpty()) {
                     item { SectionTitle("🎤 Featured Artists", "${artists.size} artists") }
-                    item { LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) { items(artists.take(20)) { a -> ArtistCard(a) { navController.navigate("artist/${a.name}") } } } }
+                    item { LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) { items(artists.take(20)) { a -> ArtistCard(a) { navController.navigate("artist/" + java.net.URLEncoder.encode(a.name ?: "", "UTF-8")) } } } }
                 }
 
                 val tops = homepage?.topArtists
                 if (tops != null && tops.isNotEmpty()) {
                     item { SectionTitle("🏆 Top Artists", "Global rankings") }
-                    item { LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) { items(tops.take(10)) { a -> TopArtistCard(a, tops.indexOf(a) + 1) { navController.navigate("artist/${a.name}") } } } }
+                    item { LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) { items(tops.take(10)) { a -> TopArtistCard(a, tops.indexOf(a) + 1) { navController.navigate("artist/" + java.net.URLEncoder.encode(a.name ?: "", "UTF-8")) } } } }
                 }
 
                 items(visibleCountries.size) { i ->

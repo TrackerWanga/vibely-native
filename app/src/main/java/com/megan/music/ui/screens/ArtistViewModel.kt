@@ -1,5 +1,6 @@
 package com.megan.music.ui.screens
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.megan.music.data.api.Artist
@@ -23,14 +24,27 @@ class ArtistViewModel @Inject constructor(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
+
     fun loadArtist(name: String) {
         viewModelScope.launch {
             _loading.value = true
+            _error.value = null
             try {
+                Log.d("ArtistVM", "Loading artist: $name")
                 val response = discoveryApi.getArtist(name)
-                _artist.value = response.artist
-                _similar.value = response.similar ?: emptyList()
-            } catch (e: Exception) { }
+                if (response.artist != null) {
+                    _artist.value = response.artist
+                    _similar.value = response.similar ?: emptyList()
+                    Log.d("ArtistVM", "Loaded: ${response.artist.name}, similar: ${_similar.value.size}")
+                } else {
+                    _error.value = "Artist not found"
+                }
+            } catch (e: Exception) {
+                Log.e("ArtistVM", "Error: ${e.message}")
+                _error.value = "Failed to load artist"
+            }
             _loading.value = false
         }
     }
