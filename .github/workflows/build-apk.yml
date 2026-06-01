@@ -1,4 +1,4 @@
-name: Build Vibely Native APK
+name: Build Megan Music APK
 
 on:
   push:
@@ -24,13 +24,28 @@ jobs:
       with:
         packages: 'platforms;android-34 build-tools;34.0.0 platform-tools'
 
+    - name: Download app icon
+      run: |
+        sudo apt-get install -y imagemagick
+        mkdir -p app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi
+        mkdir -p app/src/main/res/drawable
+        # Generate a purple music icon
+        convert -size 1024x1024 xc:'#7c3aed' -fill white -font Helvetica-Bold -pointsize 500 -gravity center -annotate 0 'M' app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 48x48 app/src/main/res/mipmap-mdpi/ic_launcher.png
+        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 72x72 app/src/main/res/mipmap-hdpi/ic_launcher.png
+        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 96x96 app/src/main/res/mipmap-xhdpi/ic_launcher.png
+        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 144x144 app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+        # Notification icon (white M)
+        convert -size 96x96 xc:transparent -fill white -font Helvetica-Bold -pointsize 80 -gravity center -annotate 0 'M' app/src/main/res/drawable/ic_notification.png
+
     - name: Build APK
       run: |
+        chmod +x gradlew
         ./gradlew wrapper --gradle-version 8.5
         ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: vibely-native
+        name: megan-music
         path: app/build/outputs/apk/debug/app-debug.apk

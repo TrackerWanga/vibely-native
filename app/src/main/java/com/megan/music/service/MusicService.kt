@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -21,6 +22,7 @@ class MusicService : MediaSessionService() {
                 .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
                 .setUsage(C.USAGE_MEDIA)
                 .build(), false)
+            repeatMode = Player.REPEAT_MODE_OFF
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -50,5 +52,13 @@ class MusicService : MediaSessionService() {
             prepare()
             play()
         }
+    }
+
+    companion object {
+        var instance: MusicService? = null
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Keep playing when app is swiped away
     }
 }
