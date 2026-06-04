@@ -18,6 +18,7 @@ class MusicService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("MusicService", "onCreate")
 
         player = ExoPlayer.Builder(this).build().apply {
             setAudioAttributes(
@@ -40,24 +41,25 @@ class MusicService : MediaSessionService() {
 
         mediaSession = MediaSession.Builder(this, player!!)
             .setSessionActivity(pendingIntent)
-            .setId("megan_music_session")
             .build()
 
         // Play if URL was set before service started
-        playUrl?.let { play(it, playTitle, playArtist) }
+        playUrl?.let { url ->
+            play(url, playTitle, playArtist)
+        }
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
-
-    override fun onDestroy() {
-        mediaSession?.release()
-        player?.release()
-        super.onDestroy()
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        Log.d("MusicService", "onGetSession")
+        return mediaSession
     }
 
-    override fun onTaskRemoved(rootIntent: Intent?) { }
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        // Keep playing
+    }
 
     fun play(url: String, title: String?, artist: String?) {
+        Log.d("MusicService", "play: $url")
         player?.apply {
             val mediaItem = MediaItem.Builder()
                 .setUri(url)
@@ -77,9 +79,16 @@ class MusicService : MediaSessionService() {
         playArtist = artist
     }
 
+    override fun onDestroy() {
+        mediaSession?.release()
+        player?.release()
+        super.onDestroy()
+    }
+
     companion object {
         var playUrl: String? = null
         var playTitle: String? = null
         var playArtist: String? = null
+        var instance: MusicService? = null
     }
 }

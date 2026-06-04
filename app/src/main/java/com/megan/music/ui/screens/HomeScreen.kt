@@ -71,7 +71,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                                 if (artist.topSongs?.isNotEmpty() == true) {
                                     Spacer(Modifier.height(10.dp))
                                     Surface(onClick = {
-                                        val song = artist.topSongs!!.first()
+                                        val song = artist.topSongs?.first() ?: return@Surface
                                         PlayerManager.playSong(context, song.videoId, song.title, artist.name, song.thumbnail)
                                         navController.navigate("player")
                                     }, color = Accent, shape = MaterialTheme.shapes.medium) {
