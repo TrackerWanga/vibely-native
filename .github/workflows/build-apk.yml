@@ -29,14 +29,14 @@ jobs:
         sudo apt-get install -y imagemagick
         mkdir -p app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi
         mkdir -p app/src/main/res/drawable
-        # Generate a purple music icon
-        convert -size 1024x1024 xc:'#7c3aed' -fill white -font Helvetica-Bold -pointsize 500 -gravity center -annotate 0 'M' app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 48x48 app/src/main/res/mipmap-mdpi/ic_launcher.png
-        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 72x72 app/src/main/res/mipmap-hdpi/ic_launcher.png
-        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 96x96 app/src/main/res/mipmap-xhdpi/ic_launcher.png
-        convert app/src/main/res/mipmap-xxxhdpi/ic_launcher.png -resize 144x144 app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-        # Notification icon (white M)
-        convert -size 96x96 xc:transparent -fill white -font Helvetica-Bold -pointsize 80 -gravity center -annotate 0 'M' app/src/main/res/drawable/ic_notification.png
+        curl -L -o /tmp/icon.png "https://files.catbox.moe/jvix9y.jpeg"
+        convert /tmp/icon.png -resize 48x48 app/src/main/res/mipmap-mdpi/ic_launcher.png
+        convert /tmp/icon.png -resize 72x72 app/src/main/res/mipmap-hdpi/ic_launcher.png
+        convert /tmp/icon.png -resize 96x96 app/src/main/res/mipmap-xhdpi/ic_launcher.png
+        convert /tmp/icon.png -resize 144x144 app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+        convert /tmp/icon.png -resize 192x192 app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        # Notification icon (white silhouette)
+        convert /tmp/icon.png -resize 96x96 -colorspace Gray -negate -threshold 50% -transparent black -fill white -colorize 100% app/src/main/res/drawable/ic_notification.png
 
     - name: Build APK
       run: |

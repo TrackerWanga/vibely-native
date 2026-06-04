@@ -17,48 +17,67 @@ class MusicService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+        
         player = ExoPlayer.Builder(this).build().apply {
-            setAudioAttributes(AudioAttributes.Builder()
-                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
-                .setUsage(C.USAGE_MEDIA)
-                .build(), false)
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .setUsage(C.USAGE_MEDIA)
+                    .build(),
+                false
+            )
             repeatMode = Player.REPEAT_MODE_OFF
+            playWhenReady = true
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         mediaSession = MediaSession.Builder(this, player!!)
             .setSessionActivity(pendingIntent)
+            .setId("megan_music_session")
             .build()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onDestroy() {
-        mediaSession?.run {
-            player?.stop()
-            player?.release()
-            release()
-        }
+        mediaSession?.release()
+        player?.release()
         super.onDestroy()
-    }
-
-    fun play(url: String) {
-        player?.apply {
-            setMediaItem(MediaItem.fromUri(url))
-            prepare()
-            play()
-        }
-    }
-
-    companion object {
-        var instance: MusicService? = null
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         // Keep playing when app is swiped away
+    }
+
+    companion object {
+        var currentUrl: String? = null
+        var currentTitle: String? = null
+        var currentArtist: String? = null
+
+        fun play(service: MusicService, url: String, title: String?, artist: String?) {
+            currentUrl = url
+            currentTitle = title
+            currentArtist = artist
+            service.player?.apply {
+                val mediaItem = MediaItem.Builder()
+                    .setUri(url)
+                    .setMediaMetadata(
+                        androidx.media3.common.MediaMetadata.Builder()
+                            .setTitle(title ?: "Unknown")
+                            .setArtist(artist ?: "Unknown Artist")
+                            .build()
+                    )
+                    .build()
+                setMediaItem(mediaItem)
+                prepare()
+                play()
+            }
+        }
     }
 }
