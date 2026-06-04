@@ -2,6 +2,7 @@ package com.megan.music.data
 
 import android.content.Context
 import android.content.Intent
+import com.megan.music.data.api.MeganApi
 import com.megan.music.service.MusicService
 
 object PlayerManager {
@@ -10,8 +11,6 @@ object PlayerManager {
         MusicService.playUrl = url
         MusicService.playTitle = title
         MusicService.playArtist = artist
-
-        // Start the music service
         val intent = Intent(context, MusicService::class.java)
         context.startForegroundService(intent)
     }
