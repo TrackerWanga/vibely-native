@@ -14,6 +14,7 @@ data class MeganSong(
 
 data class SearchResponse(val success: Boolean?, val results: List<MeganSong>?)
 data class TrendingResponse(val success: Boolean?, val results: List<MeganSong>?)
+data class DownloadResponse(val success: Boolean?, val downloadUrl: String?, val proxyUrl: String?)
 
 interface MeganApi {
     @GET("api/search/youtube")
@@ -22,8 +23,12 @@ interface MeganApi {
     @GET("api/music/trending")
     suspend fun trending(@Query("apikey") key: String): TrendingResponse
 
+    @GET("download/audio")
+    suspend fun getAudioUrl(@Query("q") query: String, @Query("apikey") key: String): DownloadResponse
+
     companion object {
         const val BASE_URL = "https://apis.megan.qzz.io/"
         const val API_KEY = "megan_admin_master"
+        const val STREAM_URL = "https://apis.megan.qzz.io/stream"
     }
 }

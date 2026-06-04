@@ -2,6 +2,7 @@ package com.megan.music.service
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -17,7 +18,7 @@ class MusicService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        
+
         player = ExoPlayer.Builder(this).build().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -41,6 +42,9 @@ class MusicService : MediaSessionService() {
             .setSessionActivity(pendingIntent)
             .setId("megan_music_session")
             .build()
+
+        // Play if URL was set before service started
+        playUrl?.let { play(it, playTitle, playArtist) }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
@@ -51,33 +55,31 @@ class MusicService : MediaSessionService() {
         super.onDestroy()
     }
 
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        // Keep playing when app is swiped away
+    override fun onTaskRemoved(rootIntent: Intent?) { }
+
+    fun play(url: String, title: String?, artist: String?) {
+        player?.apply {
+            val mediaItem = MediaItem.Builder()
+                .setUri(url)
+                .setMediaMetadata(
+                    androidx.media3.common.MediaMetadata.Builder()
+                        .setTitle(title ?: "Unknown")
+                        .setArtist(artist ?: "Unknown Artist")
+                        .build()
+                )
+                .build()
+            setMediaItem(mediaItem)
+            prepare()
+            play()
+        }
+        playUrl = url
+        playTitle = title
+        playArtist = artist
     }
 
     companion object {
-        var currentUrl: String? = null
-        var currentTitle: String? = null
-        var currentArtist: String? = null
-
-        fun play(service: MusicService, url: String, title: String?, artist: String?) {
-            currentUrl = url
-            currentTitle = title
-            currentArtist = artist
-            service.player?.apply {
-                val mediaItem = MediaItem.Builder()
-                    .setUri(url)
-                    .setMediaMetadata(
-                        androidx.media3.common.MediaMetadata.Builder()
-                            .setTitle(title ?: "Unknown")
-                            .setArtist(artist ?: "Unknown Artist")
-                            .build()
-                    )
-                    .build()
-                setMediaItem(mediaItem)
-                prepare()
-                play()
-            }
-        }
+        var playUrl: String? = null
+        var playTitle: String? = null
+        var playArtist: String? = null
     }
 }

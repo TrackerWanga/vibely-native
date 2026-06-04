@@ -1,6 +1,7 @@
 package com.megan.music.ui.screens
 
 import android.content.ComponentName
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,6 +22,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.NavController
+import com.google.common.util.concurrent.ListenableFuture
 import com.megan.music.service.MusicService
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,16 +30,18 @@ import com.megan.music.service.MusicService
 fun PlayerScreen(navController: NavController) {
     val context = LocalContext.current
     var isPlaying by remember { mutableStateOf(false) }
-    var title by remember { mutableStateOf(MusicService.currentTitle ?: "Select a song") }
-    var artist by remember { mutableStateOf(MusicService.currentArtist ?: "Browse trending or search") }
+    var title by remember { mutableStateOf("Now Playing") }
+    var artist by remember { mutableStateOf("Select a song to start") }
+    var controller by remember { mutableStateOf<MediaController?>(null) }
 
     LaunchedEffect(Unit) {
         try {
             val sessionToken = SessionToken(context, ComponentName(context, MusicService::class.java))
-            val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-            controllerFuture.addListener({
-                val controller = controllerFuture.get()
-                controller.addListener(object : Player.Listener {
+            val future: ListenableFuture<MediaController> = MediaController.Builder(context, sessionToken).buildAsync()
+            future.addListener({
+                val ctrl = future.get()
+                controller = ctrl
+                ctrl.addListener(object : Player.Listener {
                     override fun onIsPlayingChanged(playing: Boolean) { isPlaying = playing }
                     override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
                         title = item?.mediaMetadata?.title?.toString() ?: "Unknown"
@@ -72,20 +76,27 @@ fun PlayerScreen(navController: NavController) {
             Text(artist, fontSize = 14.sp, color = Color(0xFF94A3B8))
 
             Spacer(Modifier.height(40.dp))
-            LinearProgressIndicator(progress = { 0.3f }, modifier = Modifier.fillMaxWidth().height(4.dp), color = Color(0xFF7C3AED), trackColor = Color(0xFF1A1A2E))
+            LinearProgressIndicator(progress = { 0f }, modifier = Modifier.fillMaxWidth().height(4.dp), color = Color(0xFF7C3AED), trackColor = Color(0xFF1A1A2E))
 
             Spacer(Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = { }) { Icon(Icons.Filled.SkipPrevious, "Previous", modifier = Modifier.size(44.dp), tint = Color.White) }
-                FilledIconButton(onClick = { isPlaying = !isPlaying }, modifier = Modifier.size(72.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFF7C3AED))) {
+                IconButton(onClick = { controller?.seekToPreviousMediaItem() }) { Icon(Icons.Filled.SkipPrevious, "Previous", modifier = Modifier.size(44.dp), tint = Color.White) }
+                FilledIconButton(
+                    onClick = {
+                        val ctrl = controller ?: return@FilledIconButton
+                        if (ctrl.isPlaying) ctrl.pause() else ctrl.play()
+                    },
+                    modifier = Modifier.size(72.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFF7C3AED))
+                ) {
                     Icon(Icons.Filled.PlayArrow, if (isPlaying) "Pause" else "Play", modifier = Modifier.size(36.dp), tint = Color.White)
                 }
-                IconButton(onClick = { }) { Icon(Icons.Filled.SkipNext, "Next", modifier = Modifier.size(44.dp), tint = Color.White) }
+                IconButton(onClick = { controller?.seekToNextMediaItem() }) { Icon(Icons.Filled.SkipNext, "Next", modifier = Modifier.size(44.dp), tint = Color.White) }
             }
 
-            Spacer(Modifier.height(24.dp))
-            Text("🎧 Megan Music Player", fontSize = 13.sp, color = Color(0xFF475569))
-            Text("Stream music via Megan API", fontSize = 11.sp, color = Color(0xFF475569))
+            Spacer(Modifier.height(32.dp))
+            Text("🎧 Megan Music", fontSize = 14.sp, color = Color(0xFFA78BFA), fontWeight = FontWeight.Medium)
+            Text("Stream & Download via Megan API", fontSize = 11.sp, color = Color(0xFF475569))
         }
     }
 }
