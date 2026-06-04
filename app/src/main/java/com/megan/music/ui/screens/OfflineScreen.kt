@@ -55,7 +55,7 @@ fun OfflineScreen(navController: NavController) {
         else LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
             item { Text("${tracks.size} songs", color = Color(0xFF64748B), fontSize = 13.sp, modifier = Modifier.padding(16.dp)) }
             items(tracks) { track ->
-                Surface(onClick = { PlayerManager.playOffline(context, track.path, track.title, track.artist); navController.navigate("player") }, color = Color(0xFF111128), shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp)) {
+                Surface(onClick = { PlayerManager.playSong(context, track.path, track.title, track.artist); navController.navigate("player") }, color = Color(0xFF111128), shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp)) {
                     Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.MusicNote, null, tint = Color(0xFF7C3AED), modifier = Modifier.size(36.dp)); Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) { Text(track.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis); Text(track.artist, color = Color(0xFF64748B), fontSize = 12.sp) }

@@ -18,7 +18,13 @@ object PlayerManager {
 
     fun playSong(context: Context, videoId: String, title: String?, artist: String?, thumbnail: String?) {
         PlayerState.setTrack(videoId, title, artist, thumbnail)
-        val url = "https://apis.megan.qzz.io/stream?q=${videoId}&type=mp3&apikey=megan_admin_master"
+        
+        val url = if (videoId.startsWith("http") || videoId.startsWith("/")) {
+            videoId // Local file path
+        } else {
+            "https://apis.megan.qzz.io/stream?q=${videoId}&type=mp3&apikey=megan_admin_master"
+        }
+        
         val intent = Intent(context, MusicService::class.java).apply {
             putExtra("url", url)
             putExtra("title", title)
