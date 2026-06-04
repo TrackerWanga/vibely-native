@@ -21,7 +21,6 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.NavController
-import com.google.common.util.concurrent.MoreExecutors
 import com.megan.music.service.MusicService
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,14 +34,17 @@ fun PlayerScreen(navController: NavController) {
     LaunchedEffect(Unit) {
         try {
             val sessionToken = SessionToken(context, ComponentName(context, MusicService::class.java))
-            val controller = MediaController.Builder(context, sessionToken).buildAsync()
-            controller.addListener(object : Player.Listener {
-                override fun onIsPlayingChanged(playing: Boolean) { isPlaying = playing }
-                override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
-                    title = item?.mediaMetadata?.title?.toString() ?: "Unknown"
-                    artist = item?.mediaMetadata?.artist?.toString() ?: "Unknown Artist"
-                }
-            })
+            val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+            controllerFuture.addListener({
+                val controller = controllerFuture.get()
+                controller.addListener(object : Player.Listener {
+                    override fun onIsPlayingChanged(playing: Boolean) { isPlaying = playing }
+                    override fun onMediaItemTransition(item: MediaItem?, reason: Int) {
+                        title = item?.mediaMetadata?.title?.toString() ?: "Unknown"
+                        artist = item?.mediaMetadata?.artist?.toString() ?: "Unknown Artist"
+                    }
+                })
+            }, { it.run() })
         } catch (e: Exception) { }
     }
 
