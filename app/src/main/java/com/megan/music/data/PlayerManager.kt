@@ -18,21 +18,21 @@ object PlayerManager {
 
     fun playSong(context: Context, videoId: String, title: String?, artist: String?, thumbnail: String?) {
         PlayerState.setTrack(videoId, title, artist, thumbnail)
-        
         val url = if (videoId.startsWith("http") || videoId.startsWith("/")) {
-            videoId // Local file path
+            videoId
         } else {
             "https://apis.megan.qzz.io/stream?q=${videoId}&type=mp3&apikey=megan_admin_master"
         }
-        
         val intent = Intent(context, MusicService::class.java).apply {
-            putExtra("url", url)
-            putExtra("title", title)
-            putExtra("artist", artist)
+            putExtra("url", url); putExtra("title", title); putExtra("artist", artist)
         }
         context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         context.startForegroundService(intent)
         PlayerState.setPlaying(true)
+    }
+
+    fun playOffline(context: Context, filePath: String, title: String, artist: String) {
+        playSong(context, filePath, title, artist, null)
     }
 
     fun togglePlayPause() {

@@ -28,6 +28,7 @@ class MusicService : Service() {
         super.onCreate()
         Log.d("MusicService", "onCreate")
         createNotificationChannel()
+        instance = this
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -35,14 +36,11 @@ class MusicService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d("MusicService", "onStartCommand")
         startForeground(1, buildNotification())
-        
         intent?.let {
             val url = it.getStringExtra("url")
             val title = it.getStringExtra("title")
             val artist = it.getStringExtra("artist")
-            if (url != null) {
-                play(url, title, artist)
-            }
+            if (url != null) play(url, title, artist)
         }
         return START_STICKY
     }
@@ -51,7 +49,6 @@ class MusicService : Service() {
         Log.d("MusicService", "play: $url")
         currentTitle = title
         currentArtist = artist
-        
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setDataSource(url)
@@ -74,20 +71,10 @@ class MusicService : Service() {
         }
     }
 
-    fun pause() {
-        mediaPlayer?.pause()
-        isPlaying = false
-    }
-
-    fun resume() {
-        mediaPlayer?.start()
-        isPlaying = true
-    }
-
+    fun pause() { mediaPlayer?.pause(); isPlaying = false }
+    fun resume() { mediaPlayer?.start(); isPlaying = true }
     fun stop() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        mediaPlayer?.stop(); mediaPlayer?.release(); mediaPlayer = null
         isPlaying = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -95,45 +82,36 @@ class MusicService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                "megan_playback", "Megan Music",
-                NotificationManager.IMPORTANCE_LOW
-            )
+            val channel = NotificationChannel("megan_playback", "Megan Music", NotificationManager.IMPORTANCE_LOW)
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 
     private fun buildNotification(): Notification {
         val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, "megan_playback")
                 .setContentTitle(currentTitle ?: "Megan Music")
                 .setContentText(currentArtist ?: "Playing")
                 .setSmallIcon(android.R.drawable.ic_media_play)
-                .setContentIntent(pendingIntent)
-                .setOngoing(true)
-                .build()
+                .setContentIntent(pi).setOngoing(true).build()
         } else {
             @Suppress("DEPRECATION")
             Notification.Builder(this)
                 .setContentTitle(currentTitle ?: "Megan Music")
                 .setContentText(currentArtist ?: "Playing")
                 .setSmallIcon(android.R.drawable.ic_media_play)
-                .setContentIntent(pendingIntent)
-                .setOngoing(true)
-                .build()
+                .setContentIntent(pi).setOngoing(true).build()
         }
     }
 
     private fun updateNotification() {
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.notify(1, buildNotification())
+        getSystemService(NotificationManager::class.java).notify(1, buildNotification())
     }
 
     override fun onDestroy() {
-        mediaPlayer?.release()
-        mediaPlayer = null
+        mediaPlayer?.release(); mediaPlayer = null
         super.onDestroy()
     }
 
