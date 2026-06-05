@@ -28,7 +28,7 @@ class MusicService : Service() {
         super.onCreate()
         Log.d("MusicService", "onCreate")
         createNotificationChannel()
-        instance = this
+        
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
