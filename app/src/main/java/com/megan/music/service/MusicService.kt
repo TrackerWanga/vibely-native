@@ -56,8 +56,14 @@ class MusicService : Service() {
 
     private fun buildNotification(): Notification {
         val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, "megan_playback").setContentTitle(currentTitle ?: "Megan Music").setContentText(currentArtist ?: "Playing").setSmallIcon(android.R.drawable.ic_media_play).setContentIntent(pi).setOngoing(true).build()
-        else { @Suppress("DEPRECATION"); Notification.Builder(this).setContentTitle(currentTitle ?: "Megan Music").setContentText(currentArtist ?: "Playing").setSmallIcon(android.R.drawable.ic_media_play).setContentIntent(pi).setOngoing(true).build() }
+        val title = currentTitle ?: "Megan Music"
+        val text = currentArtist ?: "Playing"
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(this, "megan_playback").setContentTitle(title).setContentText(text).setSmallIcon(android.R.drawable.ic_media_play).setContentIntent(pi).setOngoing(true).build()
+        } else {
+            @Suppress("DEPRECATION")
+            Notification.Builder(this).setContentTitle(title).setContentText(text).setSmallIcon(android.R.drawable.ic_media_play).setContentIntent(pi).setOngoing(true).build()
+        }
     }
 
     private fun updateNotification() { getSystemService(NotificationManager::class.java).notify(1, buildNotification()) }
