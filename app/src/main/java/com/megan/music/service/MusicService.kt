@@ -18,7 +18,7 @@ class MusicService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     var currentTitle: String? = null
     var currentArtist: String? = null
-    var isPlaying = false
+    var playing = false
 
     inner class MusicBinder : Binder() {
         fun getService(): MusicService = this@MusicService
@@ -26,15 +26,12 @@ class MusicService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d("MusicService", "onCreate")
         createNotificationChannel()
-        
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d("MusicService", "onStartCommand")
         startForeground(1, buildNotification())
         intent?.let {
             val url = it.getStringExtra("url")
@@ -46,76 +43,40 @@ class MusicService : Service() {
     }
 
     fun play(url: String, title: String?, artist: String?) {
-        Log.d("MusicService", "play: $url")
         currentTitle = title
         currentArtist = artist
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setDataSource(url)
-            setOnPreparedListener {
-                Log.d("MusicService", "Prepared, starting playback")
-                start()
-                isPlaying = true
-                updateNotification()
-            }
-            setOnErrorListener { _, what, extra ->
-                Log.e("MusicService", "MediaPlayer error: what=$what extra=$extra")
-                false
-            }
-            setOnCompletionListener {
-                isPlaying = false
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }
+            setOnPreparedListener { start(); playing = true; updateNotification() }
+            setOnErrorListener { _, _, _ -> false }
+            setOnCompletionListener { playing = false; stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
             prepareAsync()
         }
     }
 
-    fun pause() { mediaPlayer?.pause(); isPlaying = false }
-    fun resume() { mediaPlayer?.start(); isPlaying = true }
-    fun stop() {
-        mediaPlayer?.stop(); mediaPlayer?.release(); mediaPlayer = null
-        isPlaying = false
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
-    }
+    fun pause() { mediaPlayer?.pause(); playing = false }
+    fun resume() { mediaPlayer?.start(); playing = true }
+    fun stopAll() { mediaPlayer?.stop(); mediaPlayer?.release(); mediaPlayer = null; playing = false; stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel("megan_playback", "Megan Music", NotificationManager.IMPORTANCE_LOW)
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(
+                NotificationChannel("megan_playback", "Megan Music", NotificationManager.IMPORTANCE_LOW)
+            )
         }
     }
 
     private fun buildNotification(): Notification {
-        val intent = Intent(this, MainActivity::class.java)
-        val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, "megan_playback")
-                .setContentTitle(currentTitle ?: "Megan Music")
-                .setContentText(currentArtist ?: "Playing")
-                .setSmallIcon(android.R.drawable.ic_media_play)
-                .setContentIntent(pi).setOngoing(true).build()
+            Notification.Builder(this, "megan_playback").setContentTitle(currentTitle ?: "Megan Music").setContentText(currentArtist ?: "Playing").setSmallIcon(android.R.drawable.ic_media_play).setContentIntent(pi).setOngoing(true).build()
         } else {
             @Suppress("DEPRECATION")
-            Notification.Builder(this)
-                .setContentTitle(currentTitle ?: "Megan Music")
-                .setContentText(currentArtist ?: "Playing")
-                .setSmallIcon(android.R.drawable.ic_media_play)
-                .setContentIntent(pi).setOngoing(true).build()
+            Notification.Builder(this).setContentTitle(currentTitle ?: "Megan Music").setContentText(currentArtist ?: "Playing").setSmallIcon(android.R.drawable.ic_media_play).setContentIntent(pi).setOngoing(true).build()
         }
     }
 
-    private fun updateNotification() {
-        getSystemService(NotificationManager::class.java).notify(1, buildNotification())
-    }
-
-    override fun onDestroy() {
-        mediaPlayer?.release(); mediaPlayer = null
-        super.onDestroy()
-    }
-
-    companion object {
-        var instance: MusicService? = null
-    }
+    private fun updateNotification() { getSystemService(NotificationManager::class.java).notify(1, buildNotification()) }
+    override fun onDestroy() { mediaPlayer?.release(); mediaPlayer = null; super.onDestroy() }
 }

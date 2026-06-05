@@ -72,7 +72,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                                     Spacer(Modifier.height(10.dp))
                                     Surface(onClick = {
                                         val song = artist.topSongs?.first() ?: return@Surface
-                                        PlayerManager.playSong(context, song.videoId ?: "", song.title, artist.name, song.thumbnail)
+                                        PlayerManager.play(context, song.videoId ?: "", song.title, artist.name, song.thumbnail)
                                         navController.navigate("player")
                                     }, color = Accent, shape = MaterialTheme.shapes.medium) {
                                         Row(modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Filled.PlayArrow, "Play", tint = White, modifier = Modifier.size(20.dp)); Spacer(Modifier.width(6.dp)); Text("Play Audio", color = White, fontSize = 14.sp, fontWeight = FontWeight.Medium) }
@@ -86,7 +86,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 item { Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly) { QuickChip("🙏 Gospel", GospelGreen) { navController.navigate("gospel") }; QuickChip("🌟 Beloved", BelovedGold) { navController.navigate("beloved") }; QuickChip("💾 Offline", Accent) { navController.navigate("offline") } } }
                 if (trending.isNotEmpty()) {
                     item { SectionTitle("🔥 Discover", "Trending now") }
-                    item { LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) { items(trending) { s -> YouTubeCard(s) { PlayerManager.playSong(context, s.videoId ?: "", s.title, s.author, s.thumbnail); navController.navigate("player") } } } }
+                    item { LazyRow(contentPadding = PaddingValues(horizontal = 8.dp)) { items(trending) { s -> YouTubeCard(s) { PlayerManager.play(context, s.videoId ?: "", s.title, s.author, s.thumbnail); navController.navigate("player") } } } }
                 }
                 val artists = homepage?.trending
                 if (artists != null && artists.isNotEmpty()) {
@@ -101,7 +101,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = hiltView
                 items(visibleCountries.size) { i ->
                     val country = visibleCountries[i]
                     val songs = countrySongs[country.code?.takeIf { it.isNotBlank() } ?: country.name ?: ""] ?: emptyList()
-                    CountrySection(country, songs) { song -> PlayerManager.playSong(context, song.videoId ?: "", song.title, song.author, song.thumbnail); navController.navigate("player") }
+                    CountrySection(country, songs) { song -> PlayerManager.play(context, song.videoId ?: "", song.title, song.author, song.thumbnail); navController.navigate("player") }
                 }
                 item { Spacer(Modifier.height(120.dp)) }
             }

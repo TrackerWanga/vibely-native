@@ -10,38 +10,19 @@ import com.megan.music.service.MusicService
 object PlayerManager {
     private var service: MusicService? = null
     private val connection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-            service = (binder as MusicService.MusicBinder).getService()
-        }
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) { service = (binder as MusicService.MusicBinder).getService() }
         override fun onServiceDisconnected(name: ComponentName?) { service = null }
     }
 
-    fun playSong(context: Context, videoId: String, title: String?, artist: String?, thumbnail: String?) {
+    fun play(context: Context, videoId: String, title: String?, artist: String?, thumbnail: String?) {
         PlayerState.setTrack(videoId, title, artist, thumbnail)
-        val url = if (videoId.startsWith("http") || videoId.startsWith("/")) {
-            videoId
-        } else {
-            "https://apis.megan.qzz.io/stream?q=${videoId}&type=mp3&apikey=megan_admin_master"
-        }
-        val intent = Intent(context, MusicService::class.java).apply {
-            putExtra("url", url); putExtra("title", title); putExtra("artist", artist)
-        }
+        val url = if (videoId.startsWith("/")) videoId else "https://apis.megan.qzz.io/stream?q=$videoId&type=mp3&apikey=megan_admin_master"
+        val intent = Intent(context, MusicService::class.java).apply { putExtra("url", url); putExtra("title", title); putExtra("artist", artist) }
         context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         context.startForegroundService(intent)
         PlayerState.setPlaying(true)
     }
 
-    fun playOffline(context: Context, filePath: String, title: String, artist: String) {
-        playSong(context, filePath, title, artist, null)
-    }
-
-    fun togglePlayPause() {
-        if (service?.isPlaying == true) service?.pause() else service?.resume()
-        PlayerState.setPlaying(service?.isPlaying ?: false)
-    }
-
-    fun stop() {
-        service?.stop()
-        PlayerState.setPlaying(false)
-    }
+    fun toggle() { if (service?.playing == true) service?.pause() else service?.resume(); PlayerState.setPlaying(service?.playing ?: false) }
+    fun stop() { service?.stopAll(); PlayerState.setPlaying(false) }
 }
