@@ -3,6 +3,7 @@ package com.megan.music.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
@@ -12,7 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +24,6 @@ import com.megan.music.data.PlayerState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerScreen(navController: NavController) {
-    val context = LocalContext.current
     val title by PlayerState.currentTitle.collectAsState()
     val artist by PlayerState.currentArtist.collectAsState()
     val thumbnail by PlayerState.currentThumbnail.collectAsState()
@@ -62,12 +61,25 @@ fun PlayerScreen(navController: NavController) {
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = { }) { Icon(Icons.Filled.SkipPrevious, "Previous", modifier = Modifier.size(44.dp), tint = Color.White) }
                 FilledIconButton(onClick = { PlayerManager.toggle() }, modifier = Modifier.size(72.dp), colors = IconButtonDefaults.filledIconButtonColors(containerColor = Color(0xFF7C3AED))) {
-                    Icon(Icons.Filled.PlayArrow, if (isPlaying) "Pause" else "Play", modifier = Modifier.size(36.dp), tint = Color.White)
+                    Icon(if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, if (isPlaying) "Pause" else "Play", modifier = Modifier.size(36.dp), tint = Color.White)
                 }
                 IconButton(onClick = { }) { Icon(Icons.Filled.SkipNext, "Next", modifier = Modifier.size(44.dp), tint = Color.White) }
             }
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(20.dp))
+            // Lyrics placeholder
+            Card(modifier = Modifier.fillMaxWidth().height(120.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🎤", fontSize = 24.sp)
+                        Spacer(Modifier.height(8.dp))
+                        Text("No lyrics available", fontSize = 13.sp, color = Color(0xFF64748B))
+                        Text("Lyrics coming soon via Megan API", fontSize = 11.sp, color = Color(0xFF475569))
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
             Text("🎧 Megan Music", fontSize = 14.sp, color = Color(0xFFA78BFA), fontWeight = FontWeight.Medium)
         }
     }
