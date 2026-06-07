@@ -10,7 +10,6 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
 import com.megan.music.MainActivity
 
 class MusicService : Service() {
@@ -65,23 +64,24 @@ class MusicService : Service() {
 
     private fun showNotification() {
         val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val pausePlayIntent = PendingIntent.getService(this, 1, Intent(this, MusicService::class.java).setAction(if (playing) "PAUSE" else "PLAY"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val toggleIntent = PendingIntent.getService(this, 1, Intent(this, MusicService::class.java).setAction(if (playing) "PAUSE" else "PLAY"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val stopIntent = PendingIntent.getService(this, 2, Intent(this, MusicService::class.java).setAction("STOP"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-        val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val nb = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, "megan_playback")
         } else {
             @Suppress("DEPRECATION") Notification.Builder(this)
-        }.apply {
-            setContentTitle(currentTitle ?: "Megan Music")
-            setContentText(currentArtist ?: "Playing")
-            setSmallIcon(android.R.drawable.ic_media_play)
-            setContentIntent(pi)
-            setOngoing(true)
-            addAction(if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, if (playing) "Pause" else "Play", pausePlayIntent)
-            addAction(android.R.drawable.ic_delete, "Stop", stopIntent)
-            setStyle(androidx.media.app.NotificationCompat.MediaStyle())
-        }.build()
+        }
+
+        val notification = nb
+            .setContentTitle(currentTitle ?: "Megan Music")
+            .setContentText(currentArtist ?: "Playing")
+            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setContentIntent(pi)
+            .setOngoing(true)
+            .addAction(if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, if (playing) "Pause" else "Play", toggleIntent)
+            .addAction(android.R.drawable.ic_delete, "Stop", stopIntent)
+            .build()
 
         startForeground(1, notification)
     }
