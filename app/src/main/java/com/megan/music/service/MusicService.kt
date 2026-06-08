@@ -40,19 +40,18 @@ class MusicService : Service() {
             "PLAY" -> { resume(); return START_STICKY }
             "STOP" -> { stopAll(); return START_NOT_STICKY }
         }
-        intent?.let {
-            play(it.getStringExtra("url") ?: return START_STICKY, it.getStringExtra("title"), it.getStringExtra("artist"))
-        }
+        intent?.let { play(it.getStringExtra("url") ?: return START_STICKY, it.getStringExtra("title"), it.getStringExtra("artist")) }
         return START_STICKY
     }
 
     fun play(url: String, title: String?, artist: String?) {
         currentTitle = title; currentArtist = artist
         mediaPlayer?.release()
+        showNotification() // Show loading state immediately
         mediaPlayer = MediaPlayer().apply {
             setDataSource(url)
             setOnPreparedListener { start(); playing = true; showNotification() }
-            setOnErrorListener { _, _, _ -> false }
+            setOnErrorListener { _, _, _ -> playing = false; showNotification(); false }
             setOnCompletionListener { playing = false; stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
             prepareAsync()
         }
@@ -64,7 +63,9 @@ class MusicService : Service() {
 
     private fun showNotification() {
         val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val toggleIntent = PendingIntent.getService(this, 1, Intent(this, MusicService::class.java).setAction(if (playing) "PAUSE" else "PLAY"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val toggleAction = if (playing) "PAUSE" else "PLAY"
+        val toggleLabel = if (playing) "⏸ Pause" else "▶ Play"
+        val toggleIntent = PendingIntent.getService(this, 1, Intent(this, MusicService::class.java).setAction(toggleAction), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val stopIntent = PendingIntent.getService(this, 2, Intent(this, MusicService::class.java).setAction("STOP"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val nb = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -73,17 +74,16 @@ class MusicService : Service() {
             @Suppress("DEPRECATION") Notification.Builder(this)
         }
 
-        val notification = nb
+        startForeground(1, nb
             .setContentTitle(currentTitle ?: "Megan Music")
-            .setContentText(currentArtist ?: "Playing")
+            .setContentText(currentArtist ?: if (playing) "Playing" else "Loading...")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pi)
             .setOngoing(true)
-            .addAction(if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, if (playing) "Pause" else "Play", toggleIntent)
-            .addAction(android.R.drawable.ic_delete, "Stop", stopIntent)
-            .build()
-
-        startForeground(1, notification)
+            .addAction(if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, toggleLabel, toggleIntent)
+            .addAction(android.R.drawable.ic_delete, "⏹ Stop", stopIntent)
+            .setProgress(0, 0, !playing) // Show spinner when loading
+            .build())
     }
 
     override fun onDestroy() { mediaPlayer?.release(); mediaPlayer = null; super.onDestroy() }
