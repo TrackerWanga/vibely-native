@@ -10,6 +10,7 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import com.megan.music.MainActivity
 
 class MusicService : Service() {
@@ -35,31 +36,69 @@ class MusicService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("MusicService", "onStartCommand action=${intent?.action}")
         when (intent?.action) {
             "PAUSE" -> { pause(); return START_STICKY }
             "PLAY" -> { resume(); return START_STICKY }
             "STOP" -> { stopAll(); return START_NOT_STICKY }
         }
-        intent?.let { play(it.getStringExtra("url") ?: return START_STICKY, it.getStringExtra("title"), it.getStringExtra("artist")) }
+        intent?.let {
+            val url = it.getStringExtra("url") ?: return START_STICKY
+            val title = it.getStringExtra("title")
+            val artist = it.getStringExtra("artist")
+            play(url, title, artist)
+        }
         return START_STICKY
     }
 
     fun play(url: String, title: String?, artist: String?) {
-        currentTitle = title; currentArtist = artist
-        mediaPlayer?.release()
-        showNotification() // Show loading state immediately
+        Log.d("MusicService", "play: $title")
+        currentTitle = title
+        currentArtist = artist
+        
+        // Stop and release old player
+        mediaPlayer?.apply {
+            if (isPlaying) stop()
+            release()
+        }
+        mediaPlayer = null
+        playing = false
+        
+        showNotification()
+        
         mediaPlayer = MediaPlayer().apply {
             setDataSource(url)
-            setOnPreparedListener { start(); playing = true; showNotification() }
-            setOnErrorListener { _, _, _ -> playing = false; showNotification(); false }
-            setOnCompletionListener { playing = false; stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
+            setOnPreparedListener {
+                Log.d("MusicService", "Prepared, starting playback")
+                start()
+                playing = true
+                showNotification()
+            }
+            setOnErrorListener { _, what, extra ->
+                Log.e("MusicService", "Error: what=$what extra=$extra")
+                playing = false
+                showNotification()
+                false
+            }
+            setOnCompletionListener {
+                playing = false
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+            }
             prepareAsync()
         }
     }
 
     fun pause() { mediaPlayer?.pause(); playing = false; showNotification() }
     fun resume() { mediaPlayer?.start(); playing = true; showNotification() }
-    fun stopAll() { mediaPlayer?.stop(); mediaPlayer?.release(); mediaPlayer = null; playing = false; stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
+    
+    fun stopAll() {
+        mediaPlayer?.apply { if (isPlaying) stop(); release() }
+        mediaPlayer = null
+        playing = false
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
 
     private fun showNotification() {
         val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
@@ -82,9 +121,13 @@ class MusicService : Service() {
             .setOngoing(true)
             .addAction(if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, toggleLabel, toggleIntent)
             .addAction(android.R.drawable.ic_delete, "⏹ Stop", stopIntent)
-            .setProgress(0, 0, !playing) // Show spinner when loading
+            .setProgress(0, 0, !playing)
             .build())
     }
 
-    override fun onDestroy() { mediaPlayer?.release(); mediaPlayer = null; super.onDestroy() }
+    override fun onDestroy() {
+        mediaPlayer?.release()
+        mediaPlayer = null
+        super.onDestroy()
+    }
 }
