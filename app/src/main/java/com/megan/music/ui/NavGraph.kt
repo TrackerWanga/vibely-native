@@ -7,10 +7,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.megan.music.ui.screens.*
+import com.megan.music.ui.components.BottomNavBar
 
 @Composable
 fun NavGraph() {
     val navController = rememberNavController()
+    val currentRoute = navController.currentBackStackEntry?.destination?.route
+
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { HomeScreen(navController) }
         composable("search") { SearchScreen(navController) }
@@ -18,6 +21,7 @@ fun NavGraph() {
         composable("offline") { OfflineScreen(navController) }
         composable("gospel") { GospelScreen(navController) }
         composable("beloved") { BelovedScreen(navController) }
+        composable("auth") { AuthScreen(navController) }
         composable(
             "artist/{name}",
             arguments = listOf(navArgument("name") { type = NavType.StringType })
