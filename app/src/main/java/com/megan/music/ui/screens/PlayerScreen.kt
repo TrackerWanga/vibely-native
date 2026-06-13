@@ -9,7 +9,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,19 +22,19 @@ import coil.compose.AsyncImage
 import com.megan.music.data.PlayerManager
 import com.megan.music.data.PlayerState
 import com.megan.music.data.DownloadManager
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerScreen(navController: NavController) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val title by PlayerState.currentTitle.collectAsState()
     val artist by PlayerState.currentArtist.collectAsState()
     val thumbnail by PlayerState.currentThumbnail.collectAsState()
     val videoId by PlayerState.currentVideoId.collectAsState()
     val isPlaying by PlayerState.isPlaying.collectAsState()
-    val scope = rememberCoroutineScope()
     val isLoading by PlayerState.isLoading.collectAsState()
-    var showLyrics by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -44,8 +43,8 @@ fun PlayerScreen(navController: NavController) {
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color(0xFFA78BFA)) } },
                 actions = {
                     IconButton(onClick = {
-                        val shareText = "🎵 $title - $artist\n\nListen on Megan Music: https://music.megan.qzz.io"
-                        val intent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, shareText) }
+                        val text = "$title - $artist\n\nListen on Megan Music"
+                        val intent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }
                         context.startActivity(Intent.createChooser(intent, "Share"))
                     }) { Icon(Icons.Filled.Share, "Share", tint = Color(0xFFA78BFA)) }
                 },
@@ -57,7 +56,6 @@ fun PlayerScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Artwork with loading overlay
             Box(modifier = Modifier.size(260.dp), contentAlignment = Alignment.Center) {
                 Surface(modifier = Modifier.fillMaxSize(), shape = MaterialTheme.shapes.extraLarge, color = Color(0xFF1A1A2E)) {
                     if (thumbnail.isNotEmpty()) AsyncImage(model = thumbnail, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
@@ -96,28 +94,32 @@ fun PlayerScreen(navController: NavController) {
 
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = { scope.launch { DownloadManager.downloadSong(context, videoId, title) { navController.navigate("auth") } } }) { Icon(Icons.Filled.Download, "Download", tint = Color(0xFFA78BFA)) }
-                IconButton(onClick = { showLyrics = !showLyrics }) { Icon(Icons.Filled.Lyrics, "Lyrics", tint = if (showLyrics) Color(0xFFA78BFA) else Color(0xFF64748B)) }
                 IconButton(onClick = {
-                    val shareText = "🎵 $title - $artist\n\nListen on Megan Music"
-                    val intent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, shareText) }
+                    scope.launch {
+                        DownloadManager.downloadSong(context, videoId, title) {
+                            navController.navigate("auth")
+                        }
+                    }
+                }) { Icon(Icons.Filled.Download, "Download", tint = Color(0xFFA78BFA)) }
+                IconButton(onClick = { }) { Icon(Icons.Filled.Lyrics, "Lyrics", tint = Color(0xFF64748B)) }
+                IconButton(onClick = {
+                    val text = "$title - $artist\n\nListen on Megan Music"
+                    val intent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }
                     context.startActivity(Intent.createChooser(intent, "Share"))
                 }) { Icon(Icons.Filled.Share, "Share", tint = Color(0xFFA78BFA)) }
             }
 
-            if (showLyrics) {
-                Spacer(Modifier.height(16.dp))
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Lyrics", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
-                        Spacer(Modifier.height(12.dp))
-                        Text("Lyrics powered by Megan API", color = Color(0xFF475569), fontSize = 13.sp)
-                    }
+            Spacer(Modifier.height(20.dp))
+            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Lyrics", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
+                    Spacer(Modifier.height(12.dp))
+                    Text("Sign in to unlock lyrics", color = Color(0xFF475569), fontSize = 13.sp)
                 }
             }
 
             Spacer(Modifier.height(16.dp))
-            Text("🎧 Megan Music", fontSize = 13.sp, color = Color(0xFFA78BFA), fontWeight = FontWeight.Medium)
+            Text("Megan Music", fontSize = 13.sp, color = Color(0xFFA78BFA), fontWeight = FontWeight.Medium)
         }
     }
 }
