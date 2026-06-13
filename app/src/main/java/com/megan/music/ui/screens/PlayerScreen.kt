@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.megan.music.data.PlayerManager
+import com.megan.music.data.DownloadManager
 import com.megan.music.data.PlayerState
 import com.megan.music.data.api.MeganApi
 import kotlinx.coroutines.launch

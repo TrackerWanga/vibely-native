@@ -9,21 +9,25 @@ import android.widget.Toast
 object DownloadManager {
     fun downloadSong(context: Context, videoId: String, title: String) {
         if (!AuthManager.isSignedIn) {
-            Toast.makeText(context, "Please sign in to download", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "⚠ Sign in to download songs", Toast.LENGTH_LONG).show()
             return
         }
 
-        val url = "https://apis.megan.qzz.io/download/audio?q=$videoId&apikey=megan_admin_master"
-        val request = AndroidDownloadManager.Request(Uri.parse(url))
-            .setTitle(title)
-            .setDescription("Downloading...")
-            .setNotificationVisibility(AndroidDownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "${title.replace(" ", "_")}.mp3")
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
+        try {
+            val url = "https://apis.megan.qzz.io/download/audio?q=$videoId&apikey=megan_admin_master"
+            val request = AndroidDownloadManager.Request(Uri.parse(url))
+                .setTitle(title)
+                .setDescription("Downloading ${title}...")
+                .setNotificationVisibility(AndroidDownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "MeganMusic/${title.replace(" ", "_")}.mp3")
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
 
-        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as AndroidDownloadManager
-        manager.enqueue(request)
-        Toast.makeText(context, "Downloading: $title", Toast.LENGTH_SHORT).show()
+            val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as AndroidDownloadManager
+            manager.enqueue(request)
+            Toast.makeText(context, "📥 Downloading: $title", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(context, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 }
