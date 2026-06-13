@@ -1,3 +1,5 @@
+import com.megan.music.data.PlayerManager
+import androidx.compose.ui.platform.LocalContext
 package com.megan.music.ui.screens
 
 import androidx.compose.foundation.background
@@ -34,6 +36,7 @@ import java.net.URLEncoder
 @Composable
 fun ArtistScreen(artistName: String, navController: NavController, viewModel: ArtistViewModel = hiltViewModel()) {
     val artist by viewModel.artist.collectAsState()
+    val context = LocalContext.current
     val similar by viewModel.similar.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -92,7 +95,7 @@ fun ArtistScreen(artistName: String, navController: NavController, viewModel: Ar
                 if (songs.isNotEmpty()) {
                     item { Text("Top Songs", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp)) }
                     items(songs) { s ->
-                        Surface(onClick = { navController.navigate("player") }, color = Color(0xFF111128), shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Surface(onClick = { PlayerManager.play(context, s.videoId ?: "", s.title, artistName, s.thumbnail); navController.navigate("player") }, color = Color(0xFF111128), shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                             Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 AsyncImage(model = s.thumbnail ?: "", contentDescription = null, modifier = Modifier.size(48.dp, 36.dp).clip(MaterialTheme.shapes.small), contentScale = ContentScale.Crop)
                                 Spacer(Modifier.width(12.dp))
