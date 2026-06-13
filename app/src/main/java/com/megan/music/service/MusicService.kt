@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import com.megan.music.MainActivity
+import com.megan.music.data.PlayerState
 
 class MusicService : Service() {
     private val binder = MusicBinder()
@@ -36,98 +37,65 @@ class MusicService : Service() {
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d("MusicService", "onStartCommand action=${intent?.action}")
         when (intent?.action) {
             "PAUSE" -> { pause(); return START_STICKY }
             "PLAY" -> { resume(); return START_STICKY }
             "STOP" -> { stopAll(); return START_NOT_STICKY }
         }
         intent?.let {
-            val url = it.getStringExtra("url") ?: return START_STICKY
-            val title = it.getStringExtra("title")
-            val artist = it.getStringExtra("artist")
-            play(url, title, artist)
+            play(it.getStringExtra("url") ?: return START_STICKY, it.getStringExtra("title"), it.getStringExtra("artist"))
         }
         return START_STICKY
     }
 
     fun play(url: String, title: String?, artist: String?) {
-        Log.d("MusicService", "play: $title")
-        currentTitle = title
-        currentArtist = artist
-        
-        // Stop and release old player
-        mediaPlayer?.apply {
-            if (isPlaying) stop()
-            release()
-        }
-        mediaPlayer = null
-        playing = false
-        
-        showNotification()
-        
+        currentTitle = title; currentArtist = artist
+        mediaPlayer?.apply { if (isPlaying) stop(); release() }
+        mediaPlayer = null; playing = false
+
+        showNotification(isLoading = true)
+
         mediaPlayer = MediaPlayer().apply {
             setDataSource(url)
             setOnPreparedListener {
-                Log.d("MusicService", "Prepared, starting playback")
-                start()
-                playing = true
-                showNotification()
+                start(); playing = true
+                PlayerState.setLoading(false); PlayerState.setPlaying(true)
+                showNotification(isLoading = false)
             }
-            setOnErrorListener { _, what, extra ->
-                Log.e("MusicService", "Error: what=$what extra=$extra")
-                playing = false
-                showNotification()
-                false
+            setOnErrorListener { _, _, _ ->
+                playing = false; PlayerState.setLoading(false); PlayerState.setPlaying(false)
+                showNotification(isLoading = false); false
             }
-            setOnCompletionListener {
-                playing = false
-                stopForeground(STOP_FOREGROUND_REMOVE)
-                stopSelf()
-            }
+            setOnCompletionListener { playing = false; PlayerState.setPlaying(false); stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
             prepareAsync()
         }
     }
 
-    fun pause() { mediaPlayer?.pause(); playing = false; showNotification() }
-    fun resume() { mediaPlayer?.start(); playing = true; showNotification() }
-    
-    fun stopAll() {
-        mediaPlayer?.apply { if (isPlaying) stop(); release() }
-        mediaPlayer = null
-        playing = false
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
-    }
+    fun pause() { mediaPlayer?.pause(); playing = false; PlayerState.setPlaying(false); showNotification() }
+    fun resume() { mediaPlayer?.start(); playing = true; PlayerState.setPlaying(true); showNotification() }
+    fun stopAll() { mediaPlayer?.apply { if (isPlaying) stop(); release() }; mediaPlayer = null; playing = false; PlayerState.setPlaying(false); PlayerState.setLoading(false); stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
 
-    private fun showNotification() {
+    private fun showNotification(isLoading: Boolean = false) {
         val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val toggleAction = if (playing) "PAUSE" else "PLAY"
         val toggleLabel = if (playing) "⏸ Pause" else "▶ Play"
         val toggleIntent = PendingIntent.getService(this, 1, Intent(this, MusicService::class.java).setAction(toggleAction), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val stopIntent = PendingIntent.getService(this, 2, Intent(this, MusicService::class.java).setAction("STOP"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
-        val nb = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, "megan_playback")
-        } else {
-            @Suppress("DEPRECATION") Notification.Builder(this)
-        }
+        val nb = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, "megan_playback")
+        else { @Suppress("DEPRECATION") Notification.Builder(this) }
 
         startForeground(1, nb
             .setContentTitle(currentTitle ?: "Megan Music")
-            .setContentText(currentArtist ?: if (playing) "Playing" else "Loading...")
+            .setContentText(if (isLoading) "⏳ Loading..." else currentArtist ?: "Playing")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pi)
             .setOngoing(true)
             .addAction(if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, toggleLabel, toggleIntent)
             .addAction(android.R.drawable.ic_delete, "⏹ Stop", stopIntent)
-            .setProgress(0, 0, !playing)
+            .setProgress(0, 0, isLoading)
             .build())
     }
 
-    override fun onDestroy() {
-        mediaPlayer?.release()
-        mediaPlayer = null
-        super.onDestroy()
-    }
+    override fun onDestroy() { mediaPlayer?.release(); mediaPlayer = null; super.onDestroy() }
 }

@@ -19,6 +19,9 @@ object PlayerState {
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     fun setTrack(videoId: String?, title: String?, artist: String?, thumbnail: String?) {
         _currentVideoId.value = videoId ?: ""
         _currentTitle.value = title ?: "Unknown"
@@ -27,4 +30,5 @@ object PlayerState {
     }
 
     fun setPlaying(playing: Boolean) { _isPlaying.value = playing }
+    fun setLoading(loading: Boolean) { _isLoading.value = loading }
 }

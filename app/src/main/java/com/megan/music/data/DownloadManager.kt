@@ -2,14 +2,17 @@ package com.megan.music.data
 
 import android.app.DownloadManager as AndroidDownloadManager
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
+import com.megan.music.ui.screens.AuthActivity
 
 object DownloadManager {
-    fun downloadSong(context: Context, videoId: String, title: String) {
+    fun downloadSong(context: Context, videoId: String, title: String, onNeedAuth: () -> Unit = {}) {
         if (!AuthManager.isSignedIn) {
-            Toast.makeText(context, "⚠ Sign in to download songs", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "⚠ Sign in required to download", Toast.LENGTH_LONG).show()
+            onNeedAuth()
             return
         }
 
