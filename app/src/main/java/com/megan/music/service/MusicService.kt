@@ -10,7 +10,6 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import com.megan.music.MainActivity
 import com.megan.music.data.PlayerState
 
@@ -20,6 +19,7 @@ class MusicService : Service() {
     var currentTitle: String? = null
     var currentArtist: String? = null
     var playing = false
+    var onComplete: (() -> Unit)? = null
 
     inner class MusicBinder : Binder() {
         fun getService(): MusicService = this@MusicService
@@ -41,10 +41,9 @@ class MusicService : Service() {
             "PAUSE" -> { pause(); return START_STICKY }
             "PLAY" -> { resume(); return START_STICKY }
             "STOP" -> { stopAll(); return START_NOT_STICKY }
+            "NEXT" -> { onComplete?.invoke(); return START_STICKY }
         }
-        intent?.let {
-            play(it.getStringExtra("url") ?: return START_STICKY, it.getStringExtra("title"), it.getStringExtra("artist"))
-        }
+        intent?.let { play(it.getStringExtra("url") ?: return START_STICKY, it.getStringExtra("title"), it.getStringExtra("artist")) }
         return START_STICKY
     }
 
@@ -52,7 +51,6 @@ class MusicService : Service() {
         currentTitle = title; currentArtist = artist
         mediaPlayer?.apply { if (isPlaying) stop(); release() }
         mediaPlayer = null; playing = false
-
         showNotification(isLoading = true)
 
         mediaPlayer = MediaPlayer().apply {
@@ -60,13 +58,17 @@ class MusicService : Service() {
             setOnPreparedListener {
                 start(); playing = true
                 PlayerState.setLoading(false); PlayerState.setPlaying(true)
-                showNotification(isLoading = false)
+                showNotification()
             }
             setOnErrorListener { _, _, _ ->
                 playing = false; PlayerState.setLoading(false); PlayerState.setPlaying(false)
-                showNotification(isLoading = false); false
+                showNotification(); false
             }
-            setOnCompletionListener { playing = false; PlayerState.setPlaying(false); stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
+            setOnCompletionListener {
+                playing = false; PlayerState.setPlaying(false)
+                onComplete?.invoke()
+                stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
+            }
             prepareAsync()
         }
     }
@@ -78,8 +80,9 @@ class MusicService : Service() {
     private fun showNotification(isLoading: Boolean = false) {
         val pi = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val toggleAction = if (playing) "PAUSE" else "PLAY"
-        val toggleLabel = if (playing) "⏸ Pause" else "▶ Play"
+        val toggleLabel = if (playing) "Pause" else "Play"
         val toggleIntent = PendingIntent.getService(this, 1, Intent(this, MusicService::class.java).setAction(toggleAction), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        val nextIntent = PendingIntent.getService(this, 3, Intent(this, MusicService::class.java).setAction("NEXT"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val stopIntent = PendingIntent.getService(this, 2, Intent(this, MusicService::class.java).setAction("STOP"), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val nb = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, "megan_playback")
@@ -87,12 +90,13 @@ class MusicService : Service() {
 
         startForeground(1, nb
             .setContentTitle(currentTitle ?: "Megan Music")
-            .setContentText(if (isLoading) "⏳ Loading..." else currentArtist ?: "Playing")
+            .setContentText(if (isLoading) "Loading..." else currentArtist ?: "Playing")
             .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentIntent(pi)
-            .setOngoing(true)
+            .setContentIntent(pi).setOngoing(true)
+            .addAction(android.R.drawable.ic_media_previous, "Prev", null)
             .addAction(if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play, toggleLabel, toggleIntent)
-            .addAction(android.R.drawable.ic_delete, "⏹ Stop", stopIntent)
+            .addAction(android.R.drawable.ic_media_next, "Next", nextIntent)
+            .addAction(android.R.drawable.ic_delete, "Stop", stopIntent)
             .setProgress(0, 0, isLoading)
             .build())
     }

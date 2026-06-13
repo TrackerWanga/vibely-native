@@ -22,6 +22,8 @@ import coil.compose.AsyncImage
 import com.megan.music.data.PlayerManager
 import com.megan.music.data.PlayerState
 import com.megan.music.data.DownloadManager
+import com.megan.music.data.LyricsManager
+import com.megan.music.data.AuthManager
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,6 +37,18 @@ fun PlayerScreen(navController: NavController) {
     val videoId by PlayerState.currentVideoId.collectAsState()
     val isPlaying by PlayerState.isPlaying.collectAsState()
     val isLoading by PlayerState.isLoading.collectAsState()
+    var lyrics by remember { mutableStateOf<String?>(null) }
+    var lyricsLoading by remember { mutableStateOf(false) }
+    var showLyrics by remember { mutableStateOf(false) }
+
+    fun loadLyrics() {
+        if (lyrics != null) { showLyrics = !showLyrics; return }
+        scope.launch {
+            lyricsLoading = true; showLyrics = true
+            lyrics = LyricsManager.fetchLyrics(title, artist)
+            lyricsLoading = false
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -67,7 +81,7 @@ fun PlayerScreen(navController: NavController) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 CircularProgressIndicator(color = Color(0xFF7C3AED), modifier = Modifier.size(40.dp))
                                 Spacer(Modifier.height(8.dp))
-                                Text("Loading...", color = Color.White, fontSize = 13.sp)
+                                Text("Buffering...", color = Color.White, fontSize = 13.sp)
                             }
                         }
                     }
@@ -95,13 +109,11 @@ fun PlayerScreen(navController: NavController) {
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = {
-                    scope.launch {
-                        DownloadManager.downloadSong(context, videoId, title) {
-                            navController.navigate("auth")
-                        }
-                    }
+                    scope.launch { DownloadManager.downloadSong(context, videoId, title) { navController.navigate("auth") } }
                 }) { Icon(Icons.Filled.Download, "Download", tint = Color(0xFFA78BFA)) }
-                IconButton(onClick = { }) { Icon(Icons.Filled.Lyrics, "Lyrics", tint = Color(0xFF64748B)) }
+                IconButton(onClick = { loadLyrics() }) {
+                    Icon(Icons.Filled.Lyrics, "Lyrics", tint = if (showLyrics) Color(0xFFA78BFA) else Color(0xFF64748B))
+                }
                 IconButton(onClick = {
                     val text = "$title - $artist\n\nListen on Megan Music"
                     val intent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }
@@ -109,12 +121,23 @@ fun PlayerScreen(navController: NavController) {
                 }) { Icon(Icons.Filled.Share, "Share", tint = Color(0xFFA78BFA)) }
             }
 
-            Spacer(Modifier.height(20.dp))
-            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Lyrics", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
-                    Spacer(Modifier.height(12.dp))
-                    Text("Sign in to unlock lyrics", color = Color(0xFF475569), fontSize = 13.sp)
+            if (showLyrics) {
+                Spacer(Modifier.height(16.dp))
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF111128))) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Lyrics", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 15.sp)
+                        Spacer(Modifier.height(12.dp))
+                        if (lyricsLoading) {
+                            CircularProgressIndicator(color = Color(0xFF7C3AED), modifier = Modifier.size(24.dp).align(Alignment.CenterHorizontally))
+                        } else if (!AuthManager.isSignedIn) {
+                            Text("Sign in to view lyrics", color = Color(0xFF64748B), fontSize = 13.sp)
+                            TextButton(onClick = { navController.navigate("auth") }) { Text("Sign In", color = Color(0xFFA78BFA)) }
+                        } else if (lyrics != null) {
+                            Text(lyrics!!, color = Color(0xFF94A3B8), fontSize = 14.sp, lineHeight = 22.sp)
+                        } else {
+                            Text("No lyrics available for this song", color = Color(0xFF64748B), fontSize = 13.sp)
+                        }
+                    }
                 }
             }
 
