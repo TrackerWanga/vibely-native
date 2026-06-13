@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
-import com.megan.music.ui.screens.AuthActivity
 
 object DownloadManager {
     fun downloadSong(context: Context, videoId: String, title: String, onNeedAuth: () -> Unit = {}) {
