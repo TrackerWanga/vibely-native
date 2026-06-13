@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +33,7 @@ fun PlayerScreen(navController: NavController) {
     val thumbnail by PlayerState.currentThumbnail.collectAsState()
     val videoId by PlayerState.currentVideoId.collectAsState()
     val isPlaying by PlayerState.isPlaying.collectAsState()
+    val scope = rememberCoroutineScope()
     val isLoading by PlayerState.isLoading.collectAsState()
     var showLyrics by remember { mutableStateOf(false) }
 
@@ -94,7 +96,7 @@ fun PlayerScreen(navController: NavController) {
 
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = { DownloadManager.downloadSong(context, videoId, title) { navController.navigate("auth") } }) { Icon(Icons.Filled.Download, "Download", tint = Color(0xFFA78BFA)) }
+                IconButton(onClick = { scope.launch { DownloadManager.downloadSong(context, videoId, title) { navController.navigate("auth") } } }) { Icon(Icons.Filled.Download, "Download", tint = Color(0xFFA78BFA)) }
                 IconButton(onClick = { showLyrics = !showLyrics }) { Icon(Icons.Filled.Lyrics, "Lyrics", tint = if (showLyrics) Color(0xFFA78BFA) else Color(0xFF64748B)) }
                 IconButton(onClick = {
                     val shareText = "🎵 $title - $artist\n\nListen on Megan Music"
