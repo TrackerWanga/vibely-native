@@ -40,7 +40,6 @@ jobs:
         convert /tmp/icon.png -resize 96x96 app/src/main/res/mipmap-xhdpi/ic_launcher.png
         convert /tmp/icon.png -resize 144x144 app/src/main/res/mipmap-xxhdpi/ic_launcher.png
         convert /tmp/icon.png -resize 192x192 app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-        # Notification icon
         convert /tmp/icon.png -resize 96x96 -colorspace Gray -negate -threshold 50% -transparent black -fill white -colorize 100% app/src/main/res/drawable/ic_notification.png
 
     - name: Build APK
