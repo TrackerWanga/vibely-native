@@ -26,28 +26,31 @@ object PlayerManager {
                   else "https://apis.megan.qzz.io/stream?q=$videoId&type=mp3&apikey=megan_admin_master"
 
         service?.stopAll()
-        service = null
 
         val intent = Intent(context, MusicService::class.java).apply {
-            putExtra("url", url); putExtra("title", title); putExtra("artist", artist)
+            putExtra("url", url)
+            putExtra("title", title)
+            putExtra("artist", artist)
         }
         context.startForegroundService(intent)
         context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
     }
 
     fun toggle() {
-        if (service?.playing == true) { service?.pause(); PlayerState.setPlaying(false) }
-        else { service?.resume(); PlayerState.setPlaying(true) }
+        if (service?.playing == true) { 
+            service?.pause()
+            PlayerState.setPlaying(false)
+        } else { 
+            service?.resume()
+            PlayerState.setPlaying(true)
+        }
     }
 
-    fun next() { service?.onComplete?.invoke() }
-    fun previous() { /* Implement if queue exists */ }
-
-    fun stop() {
+    fun next() { /* Implement playlist next */ }
+    fun previous() { /* Implement playlist previous */ }
+    fun stop() { 
         service?.stopAll()
-        service = null
         PlayerState.setPlaying(false)
         PlayerState.setLoading(false)
-        PlayerState.reset()
     }
 }
